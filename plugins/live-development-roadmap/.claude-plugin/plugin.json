@@ -1,0 +1,10 @@
+{
+  "name": "live-development-roadmap",
+  "version": "0.1.0",
+  "description": "Tablero en vivo del desarrollo (Gantt, tarea en curso, avance, commits, tablero por fases y notas) que Claude mantiene al día mientras trabaja. Incluye un hook que frena el cierre de turno si el tablero quedó atrás.",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT",
+  "keywords": ["roadmap", "gantt", "seguimiento", "artifact", "project-management"]
+}

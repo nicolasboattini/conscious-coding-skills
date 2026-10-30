@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap en vivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Tablero oscuro de una sola escena: barra lateral fija, encabezado con
+   métricas, tres paneles y el cuerpo de cada vista. El acento lo define
+   cada proyecto (meta/proyecto.acento); los colores de estado son fijos. */
+:root {
+  --fondo: #0a0e13;
+  --panel: #10161d;
+  --panel-2: #141c25;
+  --linea: #1f2a36;
+  --texto: #d8dee6;
+  --tenue: #7e8a98;
+  --acento: #f0703a;
+  --hecho: #7cc4fa;
+  --comprometido: #3b4757;
+  --provisional: #5d6b7c;
+  --bloqueado: #e5484d;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --cuerpo: "Barlow", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--fondo); color: var(--texto); font-family: var(--cuerpo); font-size: 14px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+.app { display: grid; grid-template-columns: 76px 1fr; height: 100%; }
+nav.lateral { border-right: 1px solid var(--linea); display: flex; flex-direction: column; align-items: stretch; background: #080b0f; }
+.marca { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-align: center; padding: 18px 4px 14px; text-transform: uppercase; overflow-wrap: anywhere; }
+.marca::after { content: ""; display: block; width: 22px; height: 2px; background: var(--acento); margin: 6px auto 0; }
+.nav-btn { background: none; border: 0; border-left: 2px solid transparent; padding: 14px 4px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: var(--display); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--tenue); }
+.nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.nav-btn[aria-current="page"] { color: var(--texto); border-left-color: var(--acento); background: var(--panel); }
+.nav-btn.abajo { margin-top: auto; }
+main { overflow: auto; padding: 22px 28px 40px; min-width: 0; }
+.eyebrow { display: flex; align-items: center; gap: 12px; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); }
+.vivo { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--acento); color: var(--acento); padding: 2px 8px; }
+.vivo i { width: 7px; height: 7px; border-radius: 50%; background: var(--acento); animation: latido 1.6s infinite; }
+.vivo.off { border-color: var(--tenue); color: var(--tenue); }
+.vivo.off i { background: var(--tenue); animation: none; }
+@keyframes latido { 50% { opacity: .25; } }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 4.4vw, 52px); letter-spacing: .04em; text-transform: uppercase; margin: 6px 0 2px; text-wrap: balance; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--tenue); font-weight: 400; }
+.metricas { font-family: var(--mono); font-size: 12.5px; color: var(--tenue); display: flex; flex-wrap: wrap; gap: 4px 16px; font-variant-numeric: tabular-nums; }
+.metricas b { color: var(--texto); font-weight: 600; }
+.paneles { margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--linea); position: relative; }
+.paneles::before, .paneles::after { content: ""; position: absolute; width: 10px; height: 10px; border-color: var(--texto); border-style: solid; opacity: .5; }
+.paneles::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+.paneles::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+.panel { padding: 16px 18px; min-width: 0; }
+.panel + .panel { border-left: 1px solid var(--linea); }
+.panel h2 { margin: 0 0 10px; font-family: var(--display); font-weight: 600; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tenue); }
+.encurso-titulo { font-family: var(--display); font-weight: 600; font-size: 21px; display: flex; gap: 10px; align-items: baseline; }
+.codigo { font-family: var(--mono); font-size: .8em; color: var(--acento); }
+.sub { color: var(--tenue); margin: 4px 0 10px; }
+.fila-dato { display: flex; justify-content: space-between; gap: 10px; font-family: var(--mono); font-size: 12.5px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+.fila-dato span:first-child { color: var(--tenue); }
+.barra { height: 6px; background: var(--panel-2); margin: 8px 0 12px; position: relative; overflow: hidden; }
+.barra > i { position: absolute; inset: 0 auto 0 0; background: var(--hecho); }
+.barra.rayada > i { background: repeating-linear-gradient(-45deg, var(--acento) 0 6px, color-mix(in srgb, var(--acento) 55%, #000) 6px 12px); }
+.barra.excedida > i { background: repeating-linear-gradient(-45deg, var(--bloqueado) 0 6px, #7a1d20 6px 12px); }
+.porcentaje { font-family: var(--display); font-weight: 600; font-size: 44px; line-height: 1; }
+.porcentaje small { font-family: var(--mono); font-size: 13px; color: var(--tenue); font-weight: 400; margin-left: 8px; }
+.cambios { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cambios li { display: grid; grid-template-columns: 44px 18px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.cambios time { font-family: var(--mono); color: var(--tenue); }
+.cambios .msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cambios svg { width: 14px; height: 14px; stroke: var(--tenue); fill: none; stroke-width: 1.8; }
+.diff { font-family: var(--mono); font-size: 11.5px; white-space: nowrap; }
+.mas { color: #4fd18b; } .menos { color: #f07178; }
+.vacio { color: var(--tenue); font-style: italic; }
+.barra-herr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 26px 0 0; }
+.tabs { display: flex; }
+.tab { background: var(--panel); border: 1px solid var(--linea); padding: 9px 22px; font-family: var(--display); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-size: 13px; color: var(--tenue); }
+.tab[aria-selected="true"] { color: var(--texto); border-bottom: 2px solid var(--hecho); background: var(--panel-2); }
+.herr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.herr input[type=search] { background: var(--panel); border: 1px solid var(--linea); color: var(--texto); padding: 8px 10px; min-width: 200px; font: inherit; }
+.chip { background: var(--panel); border: 1px solid var(--linea); padding: 7px 12px; font-family: var(--display); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; color: var(--tenue); display: inline-flex; gap: 6px; align-items: center; }
+.chip[aria-pressed="true"] { color: #0a0e13; background: var(--hecho); border-color: var(--hecho); }
+.chip.estado[aria-pressed="true"] { background: var(--panel-2); color: var(--texto); }
+.chip .pt { width: 8px; height: 8px; display: inline-block; }
+.espacio { flex: 1; }
+.select { background: var(--panel); border: 1px solid var(--linea); color: var(--texto); padding: 7px 10px; font: inherit; }
+.gantt { margin-top: 10px; border: 1px solid var(--linea); display: grid; grid-template-columns: 300px minmax(0, 1fr); background: var(--panel); }
+.g-izq { border-right: 1px solid var(--linea); min-width: 0; }
+.g-cab { height: 52px; border-bottom: 1px solid var(--linea); display: flex; align-items: flex-end; padding: 0 14px 8px; font-family: var(--display); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; font-size: 12px; color: var(--tenue); position: relative; }
+.g-fila { height: 31px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid color-mix(in srgb, var(--linea) 55%, transparent); white-space: nowrap; overflow: hidden; }
+.g-fila.fase { background: var(--panel-2); font-family: var(--display); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 13.5px; cursor: pointer; }
+.g-fila.fase .cnt { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--tenue); letter-spacing: 0; }
+.g-fila.tarea { padding-left: 26px; cursor: pointer; }
+.g-fila.tarea:hover { background: color-mix(in srgb, var(--hecho) 6%, transparent); }
+.g-fila .tit { overflow: hidden; text-overflow: ellipsis; }
+.caret { width: 10px; transition: transform .15s; display: inline-block; color: var(--tenue); }
+.abierta .caret { transform: rotate(90deg); }
+.cuad { width: 8px; height: 8px; flex: none; }
+.g-der { position: relative; overflow: hidden; min-width: 0; }
+.g-dias, .g-horas { position: absolute; left: 0; right: 0; font-family: var(--mono); font-size: 11px; color: var(--tenue); }
+.g-dias { top: 6px; height: 18px; }
+.g-horas { top: 30px; height: 18px; }
+.g-dias span, .g-horas span { position: absolute; white-space: nowrap; transform: translateX(-50%); }
+.g-dias span { transform: none; padding-left: 6px; color: var(--texto); font-weight: 600; text-transform: uppercase; }
+.g-linea-dia { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--linea); }
+.g-grilla { position: absolute; top: 52px; bottom: 0; width: 1px; background: color-mix(in srgb, var(--linea) 60%, transparent); }
+.g-ahora { position: absolute; top: 28px; bottom: 0; width: 0; border-left: 1px dashed var(--acento); z-index: 3; }
+.g-ahora b { position: absolute; top: 0; left: 0; transform: translateX(-50%); background: var(--acento); color: #0a0e13; font-family: var(--display); font-size: 11px; letter-spacing: .1em; padding: 1px 6px; }
+.g-filas { position: absolute; top: 52px; left: 0; right: 0; }
+.g-barra-fila { position: relative; height: 31px; border-bottom: 1px solid color-mix(in srgb, var(--linea) 55%, transparent); }
+.g-barra-fila.fase { background: color-mix(in srgb, var(--panel-2) 70%, transparent); }
+.bar { position: absolute; top: 9px; height: 13px; min-width: 3px; cursor: pointer; }
+.bar.hecho { background: var(--hecho); }
+.bar.en_curso { background: repeating-linear-gradient(-45deg, var(--acento) 0 6px, color-mix(in srgb, var(--acento) 55%, #000) 6px 12px); }
+.bar.comprometido { background: var(--comprometido); border: 1px solid #56657a; }
+.bar.provisional { border: 1px dashed var(--provisional); background: transparent; }
+.bar.bloqueado { background: repeating-linear-gradient(45deg, var(--bloqueado) 0 4px, transparent 4px 8px); border: 1px solid var(--bloqueado); }
+.bar.fase { top: 11px; height: 9px; opacity: .9; }
+.bar-et { position: absolute; top: 7px; font-size: 12px; color: var(--tenue); white-space: nowrap; pointer-events: none; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--tenue); margin-top: 10px; }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.leyenda i { width: 16px; height: 9px; display: inline-block; }
+.tablero { margin-top: 12px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+.col { border: 1px solid var(--linea); border-top: 2px solid var(--provisional); background: var(--panel); padding: 14px 12px; min-width: 0; }
+.col.hecha { border-top-color: var(--hecho); }
+.col.curso { border-top-color: var(--acento); }
+.col.comprometida { border-top-color: #8a9bb0; }
+.col-cab { text-align: center; }
+.col-cab .ver { font-family: var(--display); font-size: 11px; letter-spacing: .14em; color: var(--tenue); text-transform: uppercase; }
+.col-cab .nom { font-family: var(--display); font-weight: 600; font-size: 28px; line-height: 1.1; }
+.col-cab .desc { color: var(--tenue); margin: 2px 0 8px; }
+.sello { display: inline-flex; gap: 6px; align-items: center; border: 1px solid currentColor; padding: 3px 8px; font-family: var(--display); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 11.5px; }
+.cat { border: 1px solid var(--linea); background: var(--panel-2); margin-top: 10px; }
+.cat-cab { width: 100%; background: none; border: 0; display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; }
+.cat-cab b { display: block; font-weight: 600; }
+.cat-cab small { color: var(--tenue); }
+.puntos { margin-left: auto; display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 90px; }
+.puntos i { width: 7px; height: 7px; display: inline-block; }
+.tarjeta { margin: 0 8px 8px; border: 1px solid var(--linea); background: var(--panel); cursor: pointer; }
+.tarjeta-banda { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-family: var(--display); font-weight: 600; letter-spacing: .1em; font-size: 11px; text-transform: uppercase; }
+.tarjeta-tit { padding: 6px 8px 8px; font-weight: 600; }
+.tarjeta img { display: block; width: 100%; max-height: 120px; object-fit: cover; }
+.notas { margin-top: 18px; display: grid; gap: 10px; max-width: 860px; }
+.nota { border: 1px solid var(--linea); border-left: 3px solid var(--provisional); background: var(--panel); padding: 12px 14px; }
+.nota.decision { border-left-color: var(--hecho); }
+.nota.riesgo { border-left-color: var(--bloqueado); }
+.nota.resumen { border-left-color: var(--acento); }
+.nota-cab { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--tenue); text-transform: uppercase; }
+.nota p { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.5; max-width: 70ch; }
+.guia { border: 1px solid var(--linea); padding: 14px 16px; background: var(--panel-2); max-width: 860px; margin-top: 18px; line-height: 1.55; }
+.guia h3 { margin: 0 0 6px; font-family: var(--display); letter-spacing: .1em; text-transform: uppercase; font-size: 14px; }
+.guia ul { margin: 6px 0 0; padding-left: 18px; }
+dialog { background: var(--panel); color: var(--texto); border: 1px solid var(--linea); padding: 0; width: min(1080px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(3, 5, 8, .72); }
+.det-cab { display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px 14px; border-bottom: 1px solid var(--linea); }
+.det-cab h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 28px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.det-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; color: var(--tenue); align-items: center; }
+.cerrar { margin-left: auto; background: none; border: 1px solid var(--linea); width: 36px; height: 36px; font-size: 18px; flex: none; }
+.det-cuerpo { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 22px; padding: 18px 20px 22px; }
+.det-cuerpo h3 { margin: 14px 0 6px; font-family: var(--display); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; color: var(--tenue); }
+.det-cuerpo h3:first-child { margin-top: 0; }
+.det-cuerpo p { margin: 0; line-height: 1.55; white-space: pre-wrap; }
+.galeria img.principal { width: 100%; max-height: 330px; object-fit: contain; background: #05070a; border: 1px solid var(--linea); }
+.miniaturas { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.miniaturas button { border: 1px solid var(--linea); padding: 0; background: #05070a; }
+.miniaturas button[aria-pressed="true"] { border-color: var(--hecho); }
+.miniaturas img { display: block; width: 76px; height: 46px; object-fit: cover; }
+.archivo { font-family: var(--mono); font-size: 11.5px; color: var(--tenue); margin-top: 6px; text-transform: uppercase; overflow-wrap: anywhere; }
+.disc-barra { display: grid; grid-template-columns: 140px minmax(0, 1fr) 44px; gap: 10px; align-items: center; font-size: 13px; margin: 5px 0; }
+.disc-barra .barra { margin: 0; }
+.disc-barra span:last-child { font-family: var(--mono); text-align: right; color: var(--tenue); }
+.commit { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; margin-bottom: 8px; }
+.commit b { color: var(--hecho); font-weight: 600; }
+.dep { font-family: var(--mono); font-size: 12px; border: 1px solid var(--hecho); color: var(--hecho); padding: 1px 6px; margin-right: 4px; background: none; }
+.aviso { margin-top: 30px; padding: 18px; border: 1px dashed var(--linea); color: var(--tenue); max-width: 720px; line-height: 1.55; }
+@media (max-width: 900px) {
+  .paneles { grid-template-columns: 1fr; }
+  .panel + .panel { border-left: 0; border-top: 1px solid var(--linea); }
+  .gantt { grid-template-columns: 180px minmax(0, 1fr); }
+  .det-cuerpo { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  nav.lateral { flex-direction: row; border-right: 0; border-bottom: 1px solid var(--linea); }
+  .marca { display: none; }
+  .nav-btn { flex: 1; border-left: 0; border-bottom: 2px solid transparent; }
+  .nav-btn[aria-current="page"] { border-bottom-color: var(--acento); }
+  .nav-btn.abajo { margin-top: 0; }
+  main { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .vivo i { animation: none; } .caret { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="lateral" aria-label="Secciones">
+    <div class="marca" id="marca">Roadmap</div>
+    <button class="nav-btn" data-ir="seguimiento" id="nav-seguimiento">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h11M4 18h14"/></svg><span data-t="seguimiento"></span>
+    </button>
+    <button class="nav-btn" data-ir="versiones" id="nav-versiones">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="16"/><rect x="14" y="4" width="6" height="10"/></svg><span data-t="versiones"></span>
+    </button>
+    <button class="nav-btn abajo" data-ir="notas" id="nav-notas">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="M12 8v5M12 16v.5"/></svg><span data-t="notas"></span>
+    </button>
+  </nav>
+  <main id="raiz" aria-live="polite"></main>
+</div>
+<dialog id="detalle" aria-labelledby="det-titulo"></dialog>
+<script>
+"use strict";
+// ── Textos (es / en). La redacción del CONTENIDO la decide quien escribe en
+// la base (flag simple/tech del proyecto); acá solo va la interfaz.
+const TXT = {
+  es: {
+    seguimiento: "Seguimiento", versiones: "Versiones", notas: "Notas", hojaDeRuta: "Hoja de ruta", enVivo: "En vivo", sinConexion: "Sin conexión",
+    tituloSeg: "Seguimiento del progreso", tituloVer: "Vista de versiones", tituloNotas: "Notas y decisiones", actualizado: "Actualizado", hace: "hace",
+    versionDev: "Versión en desarrollo", de: "de", tareas: "tareas", decisiones: "decisiones", lineas: "líneas", ultimoCommit: "último commit",
+    ahoraMismo: "Ahora mismo · en curso", empezo: "Empezó a las", lleva: "lleva", previsto: "previsto", nadaEnCurso: "Nada en curso.", siguiente: "Sigue",
+    fasesCompletas: "Fases completadas", estimada: "estimada", ritmo: "Ritmo real", minPorTarea: "min por tarea", enDesarrolloDesde: "En desarrollo desde",
+    ultimosCambios: "Últimos cambios", sinCambios: "Sin cambios todavía.", buscar: "Buscar", desplegar: "Desplegar", plegar: "Plegar", ahora: "Ahora",
+    hechas: "hechas", hecho: "Hecho", en_curso: "En curso", comprometido: "Comprometido", provisional: "Provisional", bloqueado: "Bloqueado", descartado: "Descartado",
+    estimado: "estimado", desde: "desde", est: "est.", completada: "Completada", comprometida: "Comprometida", provisionalF: "Provisional", entradas: "entradas", entrada: "entrada",
+    queIncluye: "Qué incluye", hechoCuando: "Hecho cuando", verificacion: "Verificación", fechas: "Fechas", periodo: "Período", dependeDe: "Depende de",
+    lineasPorDisc: "líneas cambiadas", commits: "Commits", capturas: "Capturas", sinDato: "—", cerrar: "Cerrar", todas: "Todas",
+    decision: "Decisión", pendiente: "Pendiente", riesgo: "Riesgo", resumen: "Resumen", motivo: "Motivo",
+    comoLeer: "Cómo leer este tablero", sinDb: "Este tablero lee sus datos de la base del artifact. Abrilo en claude.ai con tu sesión iniciada para verlos.",
+    sinDatos: "Todavía no hay datos. Claude carga la versión, sus fases y entregables cuando se aprueba un plan.",
+    guia: [
+      "Hecho: terminado y verificado. En curso: lo que se está haciendo ahora; la barra crece hasta la línea de ahora.",
+      "Comprometido: aprobado en el plan; su barra gris es la hora estimada según los minutos previstos.",
+      "Provisional: agregado sin aprobar o de fases siguientes; puede moverse.",
+      "Bloqueado: espera algo externo (una respuesta, un permiso, un deploy). Descartado: salió del plan y queda registrado.",
+      "La fecha estimada de cierre se recalcula con el ritmo real: el promedio de minutos de lo ya hecho."
+    ],
+  },
+  en: {
+    seguimiento: "Tracking", versiones: "Versions", notas: "Notes", hojaDeRuta: "Roadmap", enVivo: "Live", sinConexion: "Offline",
+    tituloSeg: "Progress tracker", tituloVer: "Version view", tituloNotas: "Notes and decisions", actualizado: "Updated", hace: "",
+    versionDev: "Version in development", de: "of", tareas: "tasks", decisiones: "decisions", lineas: "lines", ultimoCommit: "last commit",
+    ahoraMismo: "Right now · in progress", empezo: "Started at", lleva: "elapsed", previsto: "planned", nadaEnCurso: "Nothing in progress.", siguiente: "Next",
+    fasesCompletas: "Phases completed", estimada: "estimated", ritmo: "Actual pace", minPorTarea: "min per task", enDesarrolloDesde: "In development since",
+    ultimosCambios: "Latest changes", sinCambios: "No changes yet.", buscar: "Search", desplegar: "Expand", plegar: "Collapse", ahora: "Now",
+    hechas: "done", hecho: "Done", en_curso: "In progress", comprometido: "Committed", provisional: "Tentative", bloqueado: "Blocked", descartado: "Dropped",
+    estimado: "estimated", desde: "since", est: "est.", completada: "Completed", comprometida: "Committed", provisionalF: "Tentative", entradas: "entries", entrada: "entry",
+    queIncluye: "What it includes", hechoCuando: "Done when", verificacion: "Verification", fechas: "Dates", periodo: "Period", dependeDe: "Depends on",
+    lineasPorDisc: "lines changed", commits: "Commits", capturas: "Screenshots", sinDato: "—", cerrar: "Close", todas: "All",
+    decision: "Decision", pendiente: "Pending", riesgo: "Risk", resumen: "Summary", motivo: "Reason",
+    comoLeer: "How to read this board", sinDb: "This board reads its data from the artifact's database. Open it on claude.ai while signed in to see it.",
+    sinDatos: "No data yet. Claude loads the version, its phases and deliverables once a plan is approved.",
+    guia: [
+      "Done: finished and verified. In progress: being worked on now; its bar grows up to the now line.",
+      "Committed: approved in the plan; its grey bar is the estimated time from the planned minutes.",
+      "Tentative: added without approval or in later phases; it may move.",
+      "Blocked: waiting on something external (an answer, a permission, a deploy). Dropped: removed from the plan, kept on record.",
+      "The estimated finish date follows the actual pace: the average minutes of what is already done."
+    ],
+  },
+};
+const ESTADOS = ["hecho", "en_curso", "comprometido", "provisional", "bloqueado", "descartado"];
+const COLOR_ESTADO = { hecho: "var(--hecho)", en_curso: "var(--acento)", comprometido: "#8a9bb0", provisional: "var(--provisional)", bloqueado: "var(--bloqueado)", descartado: "#3a4350" };
+const ZOOMS = [["6h", 6 * 36e5], ["1d", 24 * 36e5], ["3d", 72 * 36e5], ["1s", 7 * 864e5], ["1m", 30 * 864e5], ["3m", 91 * 864e5]];
+const ZOOM_ET = { es: { "6h": "6 h", "1d": "1 día", "3d": "3 días", "1s": "1 semana", "1m": "1 mes", "3m": "3 meses" }, en: { "6h": "6 h", "1d": "1 day", "3d": "3 days", "1s": "1 week", "1m": "1 month", "3m": "3 months" } };
+
+const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], db: "cargando" };
+const UI = { vista: "seguimiento", tab: "fases", zoom: "1d", corrimiento: 0, plegadas: new Set(), desplegadasTodas: null, busqueda: "", version: null, estados: new Set(ESTADOS), catsAbiertas: new Set(), tipoNota: "todas", detalle: null, captura: 0 };
+try { const g = JSON.parse(localStorage.getItem("ldr-ui") || "{}"); if (g.zoom) UI.zoom = g.zoom; if (g.tab) UI.tab = g.tab; } catch (e) {}
+const guardarUI = () => { try { localStorage.setItem("ldr-ui", JSON.stringify({ zoom: UI.zoom, tab: UI.tab })); } catch (e) {} };
+
+const idioma = () => (S.meta && S.meta.idioma === "en" ? "en" : "es");
+const t = (k) => TXT[idioma()][k] ?? TXT.es[k] ?? k;
+const et = (k, def) => (S.meta && S.meta.etiquetas && S.meta.etiquetas[k]) || def;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const ms = (iso) => (iso ? new Date(iso).getTime() : NaN);
+const loc = () => (idioma() === "en" ? "en-US" : "es-AR");
+const hora = (x) => new Date(x).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit", hour12: false });
+const fecha = (x) => new Date(x).toLocaleDateString(loc(), { day: "numeric", month: "short" });
+const fechaHora = (x) => `${fecha(x)}, ${hora(x)}`;
+function dur(min) {
+  if (!isFinite(min)) return t("sinDato");
+  min = Math.max(0, Math.round(min));
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  if (h < 48) return m ? `${h} h ${m} min` : `${h} h`;
+  return `${Math.round(h / 24)} d`;
+}
+function haceTxt(x) {
+  if (!isFinite(x)) return t("sinDato");
+  const min = (Date.now() - x) / 6e4;
+  const d = min < 1 ? (idioma() === "en" ? "just now" : "recién") : dur(min);
+  return idioma() === "en" ? (min < 1 ? d : `${d} ago`) : (min < 1 ? d : `${t("hace")} ${d}`);
+}
+const disciplinas = () => (S.meta && Array.isArray(S.meta.disciplinas) ? S.meta.disciplinas : []);
+const nombreDisc = (id) => (disciplinas().find((d) => d.id === id) || {}).nombre || id;
+
+// ── Modelo derivado
+function versionActual() {
+  const id = UI.version || (S.meta && S.meta.versionActual) || (S.versiones.find((v) => v.estado === "en_desarrollo") || {}).id || (S.versiones[0] || {}).id;
+  return S.versiones.find((v) => v.id === id) || (id ? { id } : null);
+}
+function datosVersion(vid) {
+  const fases = S.fases.filter((f) => f.version === vid).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+  const ordenFase = new Map(fases.map((f, i) => [f.id, i]));
+  const ents = S.entregables.filter((e) => e.version === vid)
+    .sort((a, b) => (ordenFase.get(a.fase) ?? 99) - (ordenFase.get(b.fase) ?? 99) || (a.orden ?? 0) - (b.orden ?? 0) || String(a.id).localeCompare(String(b.id)));
+  return { fases, ents };
+}
+function ritmoMin(ents) {
+  const hechos = ents.filter((e) => e.estado === "hecho" && isFinite(ms(e.inicio)) && isFinite(ms(e.fin)));
+  if (!hechos.length) return NaN;
+  return hechos.reduce((s, e) => s + (ms(e.fin) - ms(e.inicio)) / 6e4, 0) / hechos.length;
+}
+// Proyección: lo pendiente va uno detrás de otro desde "ahora" (o desde el
+// fin previsto de lo que está en curso), con sus minutos previstos o, si no
+// tiene, el ritmo real.
+function proyectar(ents) {
+  const ritmo = ritmoMin(ents);
+  const ahora = Date.now();
+  let cursor = ahora;
+  const proy = new Map();
+  for (const e of ents) if (e.estado === "en_curso") {
+    const ini = ms(e.inicio);
+    const finPrev = ini + (e.previstoMin || ritmo || 30) * 6e4;
+    proy.set(e.id, { ini, fin: ahora });
+    cursor = Math.max(cursor, finPrev);
+  }
+  for (const e of ents) if (e.estado === "comprometido" || e.estado === "provisional") {
+    const minutos = e.previstoMin || (isFinite(ritmo) ? ritmo : 30);
+    proy.set(e.id, { ini: cursor, fin: cursor + minutos * 6e4, estimado: true });
+    cursor += minutos * 6e4;
+  }
+  for (const e of ents) if (e.estado === "hecho" && isFinite(ms(e.inicio))) proy.set(e.id, { ini: ms(e.inicio), fin: isFinite(ms(e.fin)) ? ms(e.fin) : ms(e.inicio) });
+  return { proy, fin: cursor, ritmo };
+}
+function estadoFase(f, ents, proy) {
+  const propios = ents.filter((e) => e.fase === f.id && e.estado !== "descartado");
+  const hechos = propios.filter((e) => e.estado === "hecho");
+  const finFase = Math.max(...propios.map((e) => (proy.get(e.id) || {}).fin || 0), 0);
+  if (propios.length && hechos.length === propios.length) {
+    const ultimo = Math.max(...hechos.map((e) => ms(e.fin) || 0));
+    return { clase: "hecha", texto: `${t("completada")} · ${ultimo ? fecha(ultimo) : ""}`, color: "var(--hecho)" };
+  }
+  if (propios.some((e) => e.estado === "en_curso") || hechos.length) return { clase: "curso", texto: `${t("en_curso")} · ${hechos.length}/${propios.length}`, color: "var(--acento)" };
+  if (propios.some((e) => e.estado === "comprometido")) return { clase: "comprometida", texto: `${t("comprometida")} · ${t("est")} ${finFase ? fecha(finFase) : ""}`, color: "#8a9bb0" };
+  return { clase: "", texto: `${t("provisionalF")}${finFase ? ` · ${t("est")} ${fecha(finFase)}` : ""}`, color: "var(--provisional)" };
+}
+
+// ── Encabezado y paneles (compartidos por Seguimiento y Versiones)
+function encabezado(titulo) {
+  const v = versionActual();
+  const vid = v && v.id;
+  const { fases, ents } = vid ? datosVersion(vid) : { fases: [], ents: [] };
+  const validos = ents.filter((e) => e.estado !== "descartado");
+  const hechos = validos.filter((e) => e.estado === "hecho");
+  const { proy, fin, ritmo } = proyectar(ents);
+  const commitsV = S.cambios.filter((c) => c.tipo === "commit" && (!vid || c.version === vid));
+  const lineas = commitsV.reduce((s, c) => s + (c.mas || 0) + (c.menos || 0), 0);
+  const ultimo = S.cambios.find((c) => c.tipo === "commit");
+  const decisiones = S.notas.filter((n) => n.tipo === "decision" && (!vid || n.version === vid)).length;
+  const verif = S.meta && S.meta.metricas ? S.meta.metricas : {};
+  const faseCurso = fases.findIndex((f) => estadoFase(f, ents, proy).clase === "curso");
+  const fasesHechas = fases.filter((f) => estadoFase(f, ents, proy).clase === "hecha").length;
+  const actualizado = Math.max(ms(S.meta && S.meta.actualizadoEn) || 0, ...S.cambios.slice(0, 1).map((c) => ms(c.en) || 0));
+  const enCurso = ents.find((e) => e.estado === "en_curso");
+  const siguiente = ents.find((e) => e.estado === "comprometido" || e.estado === "provisional");
+  const pct = validos.length ? Math.round((hechos.length / validos.length) * 100) : 0;
+  const desde = v && v.desde ? ms(v.desde) : Math.min(...ents.map((e) => ms(e.inicio)).filter(isFinite));
+  const nombreProyecto = (S.meta && S.meta.nombre) || "";
+
+  let panelCurso;
+  if (enCurso) {
+    const lleva = (Date.now() - ms(enCurso.inicio)) / 6e4;
+    const previsto = enCurso.previstoMin || ritmo;
+    const frac = isFinite(previsto) && previsto > 0 ? Math.min(lleva / previsto, 1) : 0.5;
+    const fase = S.fases.find((f) => f.id === enCurso.fase);
+    panelCurso = `<button class="encurso-titulo" style="background:none;border:0;padding:0;text-align:left" data-detalle="${esc(enCurso.id)}"><span class="codigo">${esc(enCurso.id)}</span><span>${esc(enCurso.titulo)}</span></button>
+      <div class="sub">${esc(fase ? `${fase.codigo || et("fase", "Fase")} · ${fase.nombre}` : "")}${(enCurso.disciplinas || []).length ? " · " + esc(enCurso.disciplinas.map(nombreDisc).join(", ")) : ""}</div>
+      <div class="fila-dato"><span>${t("empezo")} ${hora(ms(enCurso.inicio))} · ${t("lleva")} <b style="color:var(--texto)">${dur(lleva)}</b></span><span>${t("previsto")} ${dur(previsto)}</span></div>
+      <div class="barra rayada ${lleva > previsto ? "excedida" : ""}"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>`;
+  } else {
+    panelCurso = `<p class="vacio">${t("nadaEnCurso")}</p>${siguiente ? `<div class="sub">${t("siguiente")}: <button class="dep" data-detalle="${esc(siguiente.id)}">${esc(siguiente.id)}</button> ${esc(siguiente.titulo)}</div>` : ""}`;
+  }
+  const items = S.cambios.slice(0, 7).map((c) => `<li><time>${hora(ms(c.en))}</time>${iconoCambio(c.tipo)}<span class="msg" title="${esc(c.mensaje)}">${esc(c.mensaje)}</span>${c.tipo === "commit" || c.mas || c.menos ? `<span class="diff"><span class="mas">+${c.mas || 0}</span> <span class="menos">−${c.menos || 0}</span></span>` : "<span></span>"}</li>`).join("");
+
+  return `<div class="eyebrow"><span>${esc(nombreProyecto)} · ${t("hojaDeRuta")}</span><span class="vivo ${S.db === "ok" ? "" : "off"}"><i></i>${S.db === "ok" ? t("enVivo") : t("sinConexion")}</span></div>
+  <h1>${esc(titulo)} <small>${actualizado ? `${t("actualizado")} ${haceTxt(actualizado)}` : ""}</small></h1>
+  <div class="metricas">
+    <span>${t("versionDev")} <b>${esc(vid || t("sinDato"))}</b></span>
+    <span>${esc(et("fase", "Fase"))} <b>${faseCurso >= 0 ? faseCurso + 1 : fasesHechas}</b> ${t("de")} ${fases.length}</span>
+    <span><b>${hechos.length}</b>/${validos.length} ${t("tareas")}</span>
+    ${verif.verificaciones != null ? `<span><b>${esc(verif.verificaciones)}</b> ${esc(verif.verificacionesEtiqueta || "tests")}</span>` : ""}
+    <span><b>${decisiones}</b> ${t("decisiones")}</span>
+    <span><b>${lineas.toLocaleString(loc())}</b> ${t("lineas")}</span>
+    ${ultimo ? `<span>${t("ultimoCommit")} <b>${esc(String(ultimo.hash || "").slice(0, 7))}</b> ${haceTxt(ms(ultimo.en))}</span>` : ""}
+  </div>
+  <section class="paneles">
+    <div class="panel"><h2>${t("ahoraMismo")}</h2>${panelCurso}</div>
+    <div class="panel"><h2>${esc(nombreProyecto)} ${esc(vid || "")}</h2>
+      <div class="porcentaje">${pct} %<small>${hechos.length} ${t("de")} ${validos.length} ${t("tareas")}</small></div>
+      <div class="barra"><i style="width:${pct}%"></i></div>
+      <div class="fila-dato"><span>${t("fasesCompletas")}</span><span>${fasesHechas} ${t("de")} ${fases.length}</span></div>
+      <div class="fila-dato"><span>${esc(vid || "")} ${t("estimada")}</span><span>${validos.length && hechos.length < validos.length ? fechaHora(fin) : t("sinDato")}</span></div>
+      <div class="fila-dato"><span>${t("ritmo")}</span><span>${isFinite(ritmo) ? `${ritmo.toFixed(1).replace(".", idioma() === "en" ? "." : ",")} ${t("minPorTarea")}` : t("sinDato")}</span></div>
+      <div class="fila-dato"><span>${t("enDesarrolloDesde")}</span><span>${isFinite(desde) ? fechaHora(desde) : t("sinDato")}</span></div>
+    </div>
+    <div class="panel"><h2>${t("ultimosCambios")}</h2>${items ? `<ul class="cambios">${items}</ul>` : `<p class="vacio">${t("sinCambios")}</p>`}</div>
+  </section>`;
+}
+function iconoCambio(tipo) {
+  if (tipo === "commit") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>`;
+  if (tipo === "pr" || tipo === "merge") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 8v8M18 16V9a3 3 0 0 0-3-3h-4"/></svg>`;
+  if (tipo === "deploy") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/></svg>`;
+}
+
+// ── Seguimiento: Gantt
+function vistaSeguimiento() {
+  const v = versionActual();
+  if (!v) return encabezado(t("tituloSeg")) + `<div class="aviso">${t("sinDatos")}</div>`;
+  const { fases, ents } = datosVersion(v.id);
+  const { proy } = proyectar(ents);
+  const q = UI.busqueda.trim().toLowerCase();
+  const coincide = (e) => !q || `${e.id} ${e.titulo}`.toLowerCase().includes(q);
+  const grupos = UI.tab === "disciplinas"
+    ? disciplinas().map((d) => ({ id: "d:" + d.id, codigo: "", nombre: d.nombre, ents: ents.filter((e) => (e.disciplinas || []).includes(d.id)) })).concat([{ id: "d:-", codigo: "", nombre: idioma() === "en" ? "No discipline" : "Sin disciplina", ents: ents.filter((e) => !(e.disciplinas || []).length) }]).filter((g) => g.ents.length)
+    : fases.map((f) => ({ id: f.id, codigo: f.codigo || "", nombre: f.nombre, ents: ents.filter((e) => e.fase === f.id) }));
+  const ancho = Math.max(320, (document.getElementById("raiz").clientWidth || 1000) - 300 - 2);
+  const span = ZOOMS.find((z) => z[0] === UI.zoom)[1];
+  const t0 = Date.now() - span * 0.6 + UI.corrimiento;
+  const t1 = t0 + span;
+  const x = (tm) => ((tm - t0) / span) * ancho;
+
+  let izq = `<div class="g-cab">${esc(et("version", "Versión"))} · ${t("hechas")}</div>`;
+  let der = "";
+  for (const g of grupos) {
+    const visibles = g.ents.filter(coincide);
+    if (q && !visibles.length) continue;
+    const abierta = q ? true : !UI.plegadas.has(g.id);
+    const validos = g.ents.filter((e) => e.estado !== "descartado");
+    const hechos = validos.filter((e) => e.estado === "hecho").length;
+    izq += `<div class="g-fila fase ${abierta ? "abierta" : ""}" data-plegar="${esc(g.id)}" role="button" tabindex="0" aria-expanded="${abierta}"><span class="caret">›</span><span class="tit">${esc(g.codigo ? `${g.codigo} · ${g.nombre}` : g.nombre)}</span><span class="cnt">${hechos}/${validos.length}</span></div>`;
+    // barra de la fase: del primer inicio al último fin (real o estimado)
+    const tramos = g.ents.map((e) => proy.get(e.id)).filter(Boolean);
+    let barraFase = "";
+    if (tramos.length) {
+      const a = Math.min(...tramos.map((p) => p.ini)), b = Math.max(...tramos.map((p) => p.fin));
+      const todosHechos = validos.length && hechos === validos.length;
+      barraFase = barraHtml(a, b, todosHechos ? "hecho" : validos.some((e) => e.estado === "en_curso") ? "hecho" : "comprometido", x, ancho, "fase", "", "");
+    }
+    der += `<div class="g-barra-fila fase">${barraFase}</div>`;
+    if (!abierta) continue;
+    for (const e of visibles) {
+      izq += `<div class="g-fila tarea" data-detalle="${esc(e.id)}" role="button" tabindex="0"><span class="cuad" style="${cuadEstilo(e.estado)}"></span><span class="codigo" style="color:var(--tenue)">${esc(e.id)}</span><span class="tit" ${e.estado === "descartado" ? 'style="text-decoration:line-through;color:var(--tenue)"' : ""}>${esc(e.titulo)}</span></div>`;
+      const p = proy.get(e.id);
+      let barra = "";
+      if (p) {
+        const et2 = e.estado === "en_curso" ? `${e.titulo} · ${t("desde")} ${hora(p.ini)}` : p.estimado ? `${e.titulo} · ${t("est")} ${hora(p.ini)}` : `${e.titulo} · ${dur((p.fin - p.ini) / 6e4)}`;
+        barra = barraHtml(p.ini, p.fin, e.estado, x, ancho, "", e.id, et2);
+      }
+      der += `<div class="g-barra-fila">${barra}</div>`;
+    }
+  }
+  // escala: días arriba, marcas abajo
+  const paso = { "6h": 36e5 / 2, "1d": 2 * 36e5, "3d": 6 * 36e5, "1s": 864e5, "1m": 7 * 864e5, "3m": 14 * 864e5 }[UI.zoom];
+  let marcas = "", grilla = "", dias = "";
+  const inicioDia = (tm) => { const d = new Date(tm); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  for (let tm = Math.ceil(t0 / paso) * paso; tm <= t1; tm += paso) {
+    const etq = paso < 864e5 ? hora(tm) : fecha(tm);
+    marcas += `<span style="left:${x(tm)}px">${etq}</span>`;
+    grilla += `<div class="g-grilla" style="left:${x(tm)}px"></div>`;
+  }
+  if (span <= 7 * 864e5) for (let d = inicioDia(t0); d <= t1; d += 864e5) {
+    if (d >= t0) grilla += `<div class="g-linea-dia" style="left:${x(d)}px"></div>`;
+    dias += `<span style="left:${Math.max(0, x(d))}px">${new Date(d).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}</span>`;
+  } else dias = `<span style="left:0">${fecha(t0)} → ${fecha(t1)}</span>`;
+  const ahora = Date.now();
+  const lineaAhora = ahora >= t0 && ahora <= t1 ? `<div class="g-ahora" style="left:${x(ahora)}px"><b>${t("ahora").toUpperCase()}</b></div>` : "";
+
+  const zooms = ZOOMS.map(([z]) => `<button class="chip" aria-pressed="${UI.zoom === z}" data-zoom="${z}">${ZOOM_ET[idioma()][z]}</button>`).join("");
+  return encabezado(t("tituloSeg")) + `
+  <div class="barra-herr"><div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="${UI.tab === "fases"}" data-tab="fases">${esc(et("fasePlural", idioma() === "en" ? "Phases" : "Fases"))}</button>
+    <button class="tab" role="tab" aria-selected="${UI.tab === "disciplinas"}" data-tab="disciplinas">${esc(et("disciplinaPlural", idioma() === "en" ? "Disciplines" : "Disciplinas"))}</button>
+  </div></div>
+  <div class="herr">
+    <input type="search" id="buscar" placeholder="${t("buscar")} ${esc(et("entregablePlural", idioma() === "en" ? "deliverables" : "entregables")).toLowerCase()}" value="${esc(UI.busqueda)}" aria-label="${t("buscar")}">
+    <button class="chip" data-accion="desplegar" title="${t("desplegar")}">⇊</button><button class="chip" data-accion="plegar" title="${t("plegar")}">⇈</button>
+    ${zooms}<span class="espacio"></span>
+    <button class="chip" data-accion="atras" aria-label="‹">‹</button><button class="chip" data-accion="ahora">${t("ahora")}</button><button class="chip" data-accion="adelante" aria-label="›">›</button>
+  </div>
+  <div class="gantt"><div class="g-izq">${izq}</div>
+    <div class="g-der" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${lineaAhora}<div class="g-filas">${der}</div></div>
+  </div>
+  <div class="leyenda">
+    <span><i style="background:var(--hecho)"></i>${t("hecho")}</span>
+    <span><i style="background:var(--acento)"></i>${t("en_curso")}</span>
+    <span><i style="background:var(--comprometido);border:1px solid #56657a"></i>${t("comprometido")} (${t("estimado")})</span>
+    <span><i style="border:1px dashed var(--provisional)"></i>${t("provisional")} (${t("estimado")})</span>
+    <span><i style="border:1px solid var(--bloqueado)"></i>${t("bloqueado")}</span>
+    <span><i style="border-left:1px dashed var(--acento);width:1px"></i>${t("ahora")}</span>
+  </div>`;
+}
+function cuadEstilo(estado) {
+  if (estado === "provisional") return "border:1px solid var(--provisional)";
+  if (estado === "comprometido") return "border:1px solid #8a9bb0;background:var(--comprometido)";
+  return `background:${COLOR_ESTADO[estado] || "var(--provisional)"}`;
+}
+function barraHtml(a, b, estado, x, ancho, extra, id, etiqueta) {
+  let x0 = x(a), x1 = x(b);
+  if (x1 < 0 || x0 > ancho) return "";
+  x0 = Math.max(x0, -2); x1 = Math.min(x1, ancho + 2);
+  const w = Math.max(3, x1 - x0);
+  const et2 = etiqueta && x1 + 8 < ancho ? `<span class="bar-et" style="left:${x1 + 8}px">${esc(etiqueta)}</span>` : "";
+  return `<div class="bar ${estado} ${extra}" style="left:${x0}px;width:${w}px" ${id ? `data-detalle="${esc(id)}" title="${esc(etiqueta)}"` : ""}></div>${et2}`;
+}
+
+// ── Versiones: tablero por fases
+function vistaVersiones() {
+  const v = versionActual();
+  if (!v) return encabezado(t("tituloVer")) + `<div class="aviso">${t("sinDatos")}</div>`;
+  const { fases, ents } = datosVersion(v.id);
+  const { proy } = proyectar(ents);
+  const cuenta = Object.fromEntries(ESTADOS.map((s) => [s, ents.filter((e) => e.estado === s).length]));
+  const chips = ESTADOS.filter((s) => cuenta[s] || s !== "descartado").map((s) => `<button class="chip estado" aria-pressed="${UI.estados.has(s)}" data-estado="${s}"><span class="pt" style="${cuadEstilo(s)}"></span>${t(s)} · ${cuenta[s]}</button>`).join("");
+  const opciones = [...S.versiones].sort((a, b) => (b.orden ?? 0) - (a.orden ?? 0)).map((x) => `<option value="${esc(x.id)}" ${x.id === v.id ? "selected" : ""}>${esc(x.id)}${x.estado ? ` · ${esc(x.estado === "publicada" ? (idioma() === "en" ? "released" : "publicada") : x.estado === "en_desarrollo" ? (idioma() === "en" ? "in development" : "en desarrollo") : (idioma() === "en" ? "planned" : "planificada"))}` : ""}</option>`).join("");
+  const resumenV = [v.resumen, v.pr && v.pr.url ? `<a href="${esc(v.pr.url)}" style="color:var(--hecho)">PR #${esc(v.pr.numero || "")}</a>` : "", v.publicadaEn ? `${idioma() === "en" ? "Released" : "Publicada"} ${fecha(ms(v.publicadaEn))}` : ""].filter(Boolean).join(" · ");
+  const cols = fases.map((f) => {
+    const est = estadoFase(f, ents, proy);
+    const propios = ents.filter((e) => e.fase === f.id && UI.estados.has(e.estado));
+    const total = ents.filter((e) => e.fase === f.id && e.estado !== "descartado");
+    const hechos = total.filter((e) => e.estado === "hecho").length;
+    const porCat = new Map();
+    for (const e of propios) { const c = (e.disciplinas || [])[0] || "-"; if (!porCat.has(c)) porCat.set(c, []); porCat.get(c).push(e); }
+    const cats = [...porCat.entries()].map(([c, lista]) => {
+      const clave = `${f.id}|${c}`;
+      const abierta = UI.catsAbiertas.has(clave);
+      const tarjetas = abierta ? lista.map((e) => {
+        const cap = (e.capturas || [])[0];
+        return `<div class="tarjeta" data-detalle="${esc(e.id)}" role="button" tabindex="0"><div class="tarjeta-banda" style="background:color-mix(in srgb, ${COLOR_ESTADO[e.estado]} 22%, transparent);color:${e.estado === "comprometido" ? "#c9d3df" : COLOR_ESTADO[e.estado]}">${t(e.estado)}</div><div class="tarjeta-tit"><span class="codigo" style="color:var(--tenue)">${esc(e.id)}</span> ${esc(e.titulo)}</div>${cap ? `<img src="/_blob/${esc(cap.asset)}" alt="${esc(cap.nombre || e.titulo)}" loading="lazy">` : ""}</div>`;
+      }).join("") : "";
+      return `<div class="cat"><button class="cat-cab" data-cat="${esc(clave)}" aria-expanded="${abierta}"><span><b>${esc(c === "-" ? (idioma() === "en" ? "No discipline" : "Sin disciplina") : nombreDisc(c))}</b><small>${lista.length} ${lista.length === 1 ? t("entrada") : t("entradas")}</small></span><span class="puntos">${lista.map((e) => `<i style="${cuadEstilo(e.estado)}"></i>`).join("")}</span><span class="caret" style="${abierta ? "transform:rotate(90deg)" : ""}">›</span></button>${tarjetas}</div>`;
+    }).join("");
+    return `<section class="col ${est.clase}"><div class="col-cab"><div class="ver">${esc(v.id)}</div><div class="nom">${esc(f.codigo || f.nombre)}</div>${f.codigo ? `<div class="desc">${esc(f.nombre)}</div>` : ""}<span class="sello" style="color:${est.color}">${esc(est.texto)}</span>${est.clase === "curso" ? `<div class="barra" style="margin:10px 0 0"><i style="width:${total.length ? (hechos / total.length) * 100 : 0}%;background:var(--acento)"></i></div>` : ""}</div>${cats || `<p class="vacio" style="text-align:center">${t("sinDato")}</p>`}</section>`;
+  }).join("");
+  return encabezado(t("tituloVer")) + `
+  <div class="herr" style="margin-top:22px">
+    <label class="sr" for="sel-version" style="color:var(--tenue)">${esc(et("version", "Versión"))}</label>
+    <select class="select" id="sel-version">${opciones}</select>
+    <button class="chip" data-accion="cats-desplegar">⇊ ${t("desplegar")}</button><button class="chip" data-accion="cats-plegar">⇈ ${t("plegar")}</button>
+    ${chips}
+  </div>
+  ${resumenV ? `<p class="sub" style="margin-top:10px">${resumenV}</p>` : ""}
+  <div class="tablero">${cols}</div>`;
+}
+
+// ── Notas
+function vistaNotas() {
+  const tipos = ["todas", "decision", "pendiente", "riesgo", "resumen"];
+  const chips = tipos.map((x) => `<button class="chip" aria-pressed="${UI.tipoNota === x}" data-nota="${x}">${x === "todas" ? t("todas") : t(x)} · ${x === "todas" ? S.notas.length : S.notas.filter((n) => n.tipo === x).length}</button>`).join("");
+  const lista = S.notas.filter((n) => UI.tipoNota === "todas" || n.tipo === UI.tipoNota).map((n) => `<article class="nota ${esc(n.tipo)}"><div class="nota-cab"><span>${esc(t(n.tipo) || n.tipo)}</span><span>${isFinite(ms(n.en)) ? fechaHora(ms(n.en)) : ""}</span>${n.version ? `<span>${esc(n.version)}</span>` : ""}</div>${n.titulo ? `<p style="font-weight:600">${esc(n.titulo)}</p>` : ""}<p>${esc(n.texto)}</p></article>`).join("");
+  return encabezado(t("tituloNotas")) + `
+  <div class="guia"><h3>${t("comoLeer")}</h3><ul>${t("guia").map((g) => `<li>${esc(g)}</li>`).join("")}</ul></div>
+  <div class="herr" style="margin-top:18px">${chips}</div>
+  <div class="notas">${lista || `<p class="vacio">${t("sinDato")}</p>`}</div>`;
+}
+
+// ── Detalle de un entregable
+function abrirDetalle(id) {
+  const e = S.entregables.find((x) => x.id === id);
+  if (!e) return;
+  UI.detalle = id; UI.captura = 0;
+  pintarDetalle();
+  const dlg = document.getElementById("detalle");
+  if (!dlg.open) dlg.showModal();
+}
+function pintarDetalle() {
+  const dlg = document.getElementById("detalle");
+  const e = S.entregables.find((x) => x.id === UI.detalle);
+  if (!e) { if (dlg.open) dlg.close(); return; }
+  const fase = S.fases.find((f) => f.id === e.fase);
+  const caps = e.capturas || [];
+  const cap = caps[UI.captura] || caps[0];
+  const lineas = Object.entries(e.lineas || {}).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...lineas.map((l) => l[1]));
+  const ini = ms(e.inicio), fin = ms(e.fin);
+  const periodo = isFinite(ini) ? `${fechaHora(ini)} → ${isFinite(fin) ? fechaHora(fin) + " · " + dur((fin - ini) / 6e4) : t("en_curso").toLowerCase()}` : e.previstoMin ? `${t("previsto")} ${dur(e.previstoMin)}` : t("sinDato");
+  const bloque = (titulo, texto) => (texto ? `<h3>${titulo}</h3><p>${esc(texto)}</p>` : "");
+  dlg.innerHTML = `<div class="det-cab"><div><h2 id="det-titulo"><span class="codigo">${esc(e.id)}</span>${esc(e.titulo)}</h2>
+    <div class="det-meta"><span class="sello" style="color:${COLOR_ESTADO[e.estado]}">${t(e.estado)}</span>${fase ? `<span>${esc(fase.codigo ? `${fase.codigo} · ${fase.nombre}` : fase.nombre)}</span>` : ""}${(e.disciplinas || []).map((d) => `<span>${esc(nombreDisc(d))}</span>`).join("")}${e.agente ? `<span>${esc(e.agente)}</span>` : ""}</div></div>
+    <button class="cerrar" data-accion="cerrar" aria-label="${t("cerrar")}">×</button></div>
+  <div class="det-cuerpo">
+    <div>
+      ${cap ? `<div class="galeria"><img class="principal" src="/_blob/${esc(cap.asset)}" alt="${esc(cap.nombre || e.titulo)}">${caps.length > 1 ? `<div class="miniaturas">${caps.map((c, i) => `<button aria-pressed="${i === UI.captura}" data-captura="${i}" aria-label="${esc(c.nombre || String(i + 1))}"><img src="/_blob/${esc(c.asset)}" alt=""></button>`).join("")}</div>` : ""}<div class="archivo">${esc(cap.nombre || "")}</div></div>` : ""}
+      <h3>${t("fechas")}</h3>
+      <div class="fila-dato"><span>${t("periodo")}</span><span>${esc(periodo)}</span></div>
+      ${(e.dependeDe || []).length ? `<div class="fila-dato"><span>${t("dependeDe")}</span><span>${e.dependeDe.map((d) => `<button class="dep" data-detalle="${esc(d)}">${esc(d)}</button>`).join("")}</span></div>` : ""}
+      ${e.estado === "bloqueado" && e.motivoBloqueo ? `<div class="fila-dato"><span>${t("motivo")}</span><span style="color:var(--bloqueado)">${esc(e.motivoBloqueo)}</span></div>` : ""}
+      ${lineas.length ? `<h3>${esc(et("disciplinaPlural", idioma() === "en" ? "Disciplines" : "Disciplinas"))} · ${t("lineasPorDisc")}</h3>${lineas.map(([d, n]) => `<div class="disc-barra"><span>${esc(nombreDisc(d))}</span><div class="barra"><i style="width:${(n / max) * 100}%"></i></div><span>${n}</span></div>`).join("")}` : ""}
+    </div>
+    <div>
+      ${bloque(t("queIncluye"), e.incluye)}
+      ${bloque(t("hechoCuando"), e.hechoCuando)}
+      ${bloque(t("verificacion"), e.verificacion)}
+      ${(e.commits || []).length ? `<h3>${t("commits")}</h3>${e.commits.map((c) => `<div class="commit"><b>${esc(String(c.hash || "").slice(0, 7))}</b> ${isFinite(ms(c.en)) ? esc(fechaHora(ms(c.en))) : ""} · ${esc(c.mensaje || "")}${c.mas != null ? ` <span class="mas">+${c.mas}</span> <span class="menos">−${c.menos || 0}</span>` : ""}</div>`).join("")}` : ""}
+    </div>
+  </div>`;
+}
+
+// ── Render y eventos
+let pendiente = false;
+function render() {
+  if (pendiente) return;
+  pendiente = true;
+  requestAnimationFrame(() => {
+    pendiente = false;
+    const raiz = document.getElementById("raiz");
+    const foco = document.activeElement && document.activeElement.id === "buscar" ? document.activeElement.selectionStart : null;
+    document.documentElement.lang = idioma();
+    if (S.meta && /^#[0-9a-f]{3,8}$/i.test(S.meta.acento || "")) document.documentElement.style.setProperty("--acento", S.meta.acento);
+    document.getElementById("marca").textContent = (S.meta && (S.meta.sigla || S.meta.nombre)) || "Roadmap";
+    document.title = S.meta && S.meta.nombre ? `${S.meta.nombre} · Roadmap` : "Roadmap en vivo";
+    document.querySelectorAll("[data-t]").forEach((n) => (n.textContent = t(n.dataset.t)));
+    document.querySelectorAll(".nav-btn").forEach((b) => (b.dataset.ir === UI.vista ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
+    if (S.db === "sin") { raiz.innerHTML = `<div class="eyebrow"><span>Roadmap</span></div><h1>Roadmap</h1><div class="aviso">${t("sinDb")}</div>`; return; }
+    raiz.innerHTML = UI.vista === "versiones" ? vistaVersiones() : UI.vista === "notas" ? vistaNotas() : vistaSeguimiento();
+    if (foco != null) { const b = document.getElementById("buscar"); if (b) { b.focus(); b.setSelectionRange(foco, foco); } }
+    if (UI.detalle && document.getElementById("detalle").open) pintarDetalle();
+  });
+}
+function irA(vista) { UI.vista = ["seguimiento", "versiones", "notas"].includes(vista) ? vista : "seguimiento"; render(); }
+window.addEventListener("hashchange", () => irA(location.hash.slice(1)));
+document.addEventListener("click", (ev) => {
+  const el = ev.target.closest("[data-ir],[data-detalle],[data-plegar],[data-zoom],[data-tab],[data-accion],[data-estado],[data-cat],[data-nota],[data-captura]");
+  if (!el) return;
+  const d = el.dataset;
+  if (d.ir) { location.hash = d.ir; irA(d.ir); }
+  else if (d.detalle) abrirDetalle(d.detalle);
+  else if (d.plegar) { UI.plegadas.has(d.plegar) ? UI.plegadas.delete(d.plegar) : UI.plegadas.add(d.plegar); render(); }
+  else if (d.zoom) { UI.zoom = d.zoom; UI.corrimiento = 0; guardarUI(); render(); }
+  else if (d.tab) { UI.tab = d.tab; UI.plegadas.clear(); guardarUI(); render(); }
+  else if (d.estado) { UI.estados.has(d.estado) ? UI.estados.delete(d.estado) : UI.estados.add(d.estado); render(); }
+  else if (d.cat) { UI.catsAbiertas.has(d.cat) ? UI.catsAbiertas.delete(d.cat) : UI.catsAbiertas.add(d.cat); render(); }
+  else if (d.nota) { UI.tipoNota = d.nota; render(); }
+  else if (d.captura) { UI.captura = Number(d.captura); pintarDetalle(); }
+  else if (d.accion) {
+    const span = ZOOMS.find((z) => z[0] === UI.zoom)[1];
+    if (d.accion === "cerrar") { document.getElementById("detalle").close(); }
+    else if (d.accion === "atras") { UI.corrimiento -= span / 2; render(); }
+    else if (d.accion === "adelante") { UI.corrimiento += span / 2; render(); }
+    else if (d.accion === "ahora") { UI.corrimiento = 0; render(); }
+    else if (d.accion === "plegar") { const v = versionActual(); if (v) { const { fases } = datosVersion(v.id); (UI.tab === "fases" ? fases.map((f) => f.id) : disciplinas().map((x) => "d:" + x.id).concat(["d:-"])).forEach((id) => UI.plegadas.add(id)); } render(); }
+    else if (d.accion === "desplegar") { UI.plegadas.clear(); render(); }
+    else if (d.accion === "cats-desplegar" || d.accion === "cats-plegar") {
+      const v = versionActual(); if (!v) return;
+      const { fases, ents } = datosVersion(v.id);
+      UI.catsAbiertas.clear();
+      if (d.accion === "cats-desplegar") for (const f of fases) for (const e of ents.filter((x) => x.fase === f.id)) UI.catsAbiertas.add(`${f.id}|${(e.disciplinas || [])[0] || "-"}`);
+      render();
+    }
+  }
+});
+document.addEventListener("keydown", (ev) => {
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[role=button][data-detalle],[role=button][data-plegar]")) { ev.preventDefault(); ev.target.click(); }
+});
+document.addEventListener("input", (ev) => { if (ev.target.id === "buscar") { UI.busqueda = ev.target.value; render(); } });
+document.addEventListener("change", (ev) => { if (ev.target.id === "sel-version") { UI.version = ev.target.value; UI.catsAbiertas.clear(); render(); } });
+document.getElementById("detalle").addEventListener("close", () => { UI.detalle = null; });
+new ResizeObserver(() => { if (UI.vista === "seguimiento") render(); }).observe(document.getElementById("raiz"));
+setInterval(render, 30000); // "hace N min", la barra en curso y la línea de ahora; no escribe nada
+
+// ── Datos en vivo
+irA(location.hash.slice(1));
+(async () => {
+  const db = window.claude && typeof window.claude.use === "function" ? await window.claude.use("db") : null;
+  if (!db) { S.db = "sin"; render(); return; }
+  S.db = "ok";
+  const caida = () => { S.db = "error"; render(); };
+  const lista = (col, q, clave) => (q || db.collection(col)).onSnapshot((snap) => { S[clave] = snap.docs.filter((d) => d.exists).map((d) => ({ id: d.id, ...d.data() })); render(); }, caida);
+  db.doc("meta/proyecto").onSnapshot((d) => { S.meta = d.exists ? d.data() : null; render(); }, caida);
+  lista("versiones", null, "versiones");
+  lista("fases", null, "fases");
+  lista("entregables", null, "entregables");
+  lista("cambios", db.collection("cambios").orderBy("en", "desc").limit(300), "cambios");
+  lista("notas", db.collection("notas").orderBy("en", "desc").limit(500), "notas");
+  render();
+})();
+</script>
+</body>
+</html>
