@@ -11,14 +11,14 @@ Skills y plugins para Claude Code. Cada uno vive en `plugins/<nombre>/` y se ins
 ### Como plugin de Claude Code (recomendado: incluye los hooks)
 
 ```text
-/plugin marketplace add <usuario>/conscious-coding-skills
+/plugin marketplace add nicolasboattini/conscious-coding-skills
 /plugin install live-development-roadmap@conscious-coding-skills
 ```
 
 ### Solo la skill, con `npx skills`
 
 ```bash
-npx skills add <usuario>/conscious-coding-skills --skill live-development-roadmap
+npx skills add nicolasboattini/conscious-coding-skills --skill live-development-roadmap
 ```
 
 Así se instala la skill sin los hooks del plugin. Funciona igual, pero nada te frena al cerrar un turno si el tablero quedó atrás.
