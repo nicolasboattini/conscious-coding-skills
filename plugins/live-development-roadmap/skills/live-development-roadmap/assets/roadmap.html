@@ -122,7 +122,15 @@ h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-
 .bar.provisional { border: 1px dashed var(--provisional); background: transparent; }
 .bar.bloqueado { background: repeating-linear-gradient(45deg, var(--bloqueado) 0 4px, transparent 4px 8px); border: 1px solid var(--bloqueado); }
 .bar.fase { top: 11px; height: 9px; opacity: .9; }
-.bar-et { position: absolute; top: 7px; font-size: 12px; color: var(--tenue); white-space: nowrap; pointer-events: none; }
+.bar-et { position: absolute; top: 7px; font-size: 12px; color: var(--tenue); white-space: nowrap; pointer-events: none; z-index: 1; text-shadow: 0 0 3px var(--panel), 0 0 3px var(--panel), 0 0 6px var(--panel); }
+.g-pausa { position: absolute; top: 52px; bottom: 0; z-index: 0; border-left: 1px dashed color-mix(in srgb, var(--tenue) 40%, transparent); border-right: 1px dashed color-mix(in srgb, var(--tenue) 40%, transparent); pointer-events: none; }
+.g-pausa > i { position: absolute; top: 0; bottom: 0; pointer-events: auto; }
+.g-pausa > i.limite_uso { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--tenue) 13%, transparent) 0 4px, transparent 4px 12px), color-mix(in srgb, var(--tenue) 6%, transparent); }
+.g-pausa > i:not(.limite_uso) { background: color-mix(in srgb, var(--tenue) 7%, transparent); }
+.g-pausa-et { position: absolute; top: 5px; height: 18px; line-height: 18px; padding: 0 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; font-family: var(--display); font-weight: 600; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; border-bottom: 1px dashed color-mix(in srgb, var(--tenue) 45%, transparent); z-index: 2; }
+.g-pausa-et::before { content: ""; display: inline-block; vertical-align: -1px; margin-right: 5px; width: 9px; height: 9px; background: repeating-linear-gradient(135deg, var(--tenue) 0 1px, transparent 1px 3px); }
+.bar-hueco { position: absolute; top: -1px; bottom: -1px; background: color-mix(in srgb, var(--panel) 78%, transparent); }
+.pausa-activa { margin-top: 8px; padding: 6px 8px; border: 1px dashed color-mix(in srgb, var(--tenue) 60%, transparent); font-size: 12.5px; color: var(--texto); }
 .leyenda { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--tenue); margin-top: 10px; }
 .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
 .leyenda i { width: 16px; height: 9px; display: inline-block; }
@@ -231,6 +239,7 @@ const TXT = {
     queIncluye: "Qué incluye", hechoCuando: "Hecho cuando", verificacion: "Verificación", fechas: "Fechas", periodo: "Período", dependeDe: "Depende de",
     lineasPorDisc: "líneas cambiadas", commits: "Commits", capturas: "Capturas", sinDato: "—", cerrar: "Cerrar", todas: "Todas",
     decision: "Decisión", pendiente: "Pendiente", riesgo: "Riesgo", resumen: "Resumen", motivo: "Motivo",
+    pausa: "Pausa", enPausa: "En pausa", sinPausas: "sin pausas", limite_uso: "Límite de uso", espera_usuario: "Esperando al usuario", fuera_de_horario: "Fuera de horario", otro: "Pausa",
     comoLeer: "Cómo leer este tablero", sinDb: "Este tablero lee sus datos de la base del artifact. Abrilo en claude.ai con tu sesión iniciada para verlos.",
     sinDatos: "Todavía no hay datos. Claude carga la versión, sus fases y entregables cuando se aprueba un plan.",
     guia: [
@@ -238,6 +247,7 @@ const TXT = {
       "Comprometido: aprobado en el plan; su barra gris es la hora estimada según los minutos previstos.",
       "Provisional: agregado sin aprobar o de fases siguientes; puede moverse.",
       "Bloqueado: espera algo externo (una respuesta, un permiso, un deploy). Descartado: salió del plan y queda registrado.",
+      "Las franjas rayadas del Gantt son pausas del trabajo (límite de uso, esperando al usuario, fuera de horario). Su tiempo no cuenta en la duración de las tareas ni en el ritmo.",
       "La fecha estimada de cierre se recalcula con el ritmo real: el promedio de minutos de lo ya hecho."
     ],
   },
@@ -253,6 +263,7 @@ const TXT = {
     queIncluye: "What it includes", hechoCuando: "Done when", verificacion: "Verification", fechas: "Dates", periodo: "Period", dependeDe: "Depends on",
     lineasPorDisc: "lines changed", commits: "Commits", capturas: "Screenshots", sinDato: "—", cerrar: "Close", todas: "All",
     decision: "Decision", pendiente: "Pending", riesgo: "Risk", resumen: "Summary", motivo: "Reason",
+    pausa: "Pause", enPausa: "Paused", sinPausas: "excluding pauses", limite_uso: "Usage limit", espera_usuario: "Waiting on user", fuera_de_horario: "Off hours", otro: "Pause",
     comoLeer: "How to read this board", sinDb: "This board reads its data from the artifact's database. Open it on claude.ai while signed in to see it.",
     sinDatos: "No data yet. Claude loads the version, its phases and deliverables once a plan is approved.",
     guia: [
@@ -260,6 +271,7 @@ const TXT = {
       "Committed: approved in the plan; its grey bar is the estimated time from the planned minutes.",
       "Tentative: added without approval or in later phases; it may move.",
       "Blocked: waiting on something external (an answer, a permission, a deploy). Dropped: removed from the plan, kept on record.",
+      "Hatched bands on the Gantt are work pauses (usage limit, waiting on the user, off hours). Their time is left out of task durations and the pace.",
       "The estimated finish date follows the actual pace: the average minutes of what is already done."
     ],
   },
@@ -269,7 +281,7 @@ const COLOR_ESTADO = { hecho: "var(--hecho)", en_curso: "var(--acento)", comprom
 const ZOOMS = [["6h", 6 * 36e5], ["1d", 24 * 36e5], ["3d", 72 * 36e5], ["1s", 7 * 864e5], ["1m", 30 * 864e5], ["3m", 91 * 864e5]];
 const ZOOM_ET = { es: { "6h": "6 h", "1d": "1 día", "3d": "3 días", "1s": "1 semana", "1m": "1 mes", "3m": "3 meses" }, en: { "6h": "6 h", "1d": "1 day", "3d": "3 days", "1s": "1 week", "1m": "1 month", "3m": "3 months" } };
 
-const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], db: "cargando" };
+const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], pausas: [], db: "cargando" };
 const UI = { vista: "seguimiento", tab: "fases", zoom: "1d", corrimiento: 0, plegadas: new Set(), desplegadasTodas: null, busqueda: "", version: null, estados: new Set(ESTADOS), catsAbiertas: new Set(), tipoNota: "todas", detalle: null, captura: 0 };
 try { const g = JSON.parse(localStorage.getItem("ldr-ui") || "{}"); if (g.zoom) UI.zoom = g.zoom; if (g.tab) UI.tab = g.tab; } catch (e) {}
 const guardarUI = () => { try { localStorage.setItem("ldr-ui", JSON.stringify({ zoom: UI.zoom, tab: UI.tab })); } catch (e) {} };
@@ -312,10 +324,22 @@ function datosVersion(vid) {
     .sort((a, b) => (ordenFase.get(a.fase) ?? 99) - (ordenFase.get(b.fase) ?? 99) || (a.orden ?? 0) - (b.orden ?? 0) || String(a.id).localeCompare(String(b.id)));
   return { fases, ents };
 }
+// Pausas (límite de uso, esperando al usuario, fuera de horario): tramos sin
+// trabajo. Una pausa sin fin sigue abierta hasta ahora.
+function tramosPausa() {
+  return S.pausas.map((p) => ({ ...p, a: ms(p.inicio), b: isFinite(ms(p.fin)) ? ms(p.fin) : Date.now() })).filter((p) => isFinite(p.a) && p.b > p.a);
+}
+const pausaActiva = () => S.pausas.find((p) => isFinite(ms(p.inicio)) && !p.fin);
+// Minutos de trabajo entre a y b, descontando las pausas que se superponen.
+function minutosEfectivos(a, b) {
+  let total = b - a;
+  for (const p of tramosPausa()) total -= Math.max(0, Math.min(b, p.b) - Math.max(a, p.a));
+  return Math.max(0, total) / 6e4;
+}
 function ritmoMin(ents) {
   const hechos = ents.filter((e) => e.estado === "hecho" && isFinite(ms(e.inicio)) && isFinite(ms(e.fin)));
   if (!hechos.length) return NaN;
-  return hechos.reduce((s, e) => s + (ms(e.fin) - ms(e.inicio)) / 6e4, 0) / hechos.length;
+  return hechos.reduce((s, e) => s + minutosEfectivos(ms(e.inicio), ms(e.fin)), 0) / hechos.length;
 }
 // Proyección: lo pendiente va uno detrás de otro desde "ahora" (o desde el
 // fin previsto de lo que está en curso), con sus minutos previstos o, si no
@@ -376,7 +400,7 @@ function encabezado(titulo) {
 
   let panelCurso;
   if (enCurso) {
-    const lleva = (Date.now() - ms(enCurso.inicio)) / 6e4;
+    const lleva = minutosEfectivos(ms(enCurso.inicio), Date.now());
     const previsto = enCurso.previstoMin || ritmo;
     const frac = isFinite(previsto) && previsto > 0 ? Math.min(lleva / previsto, 1) : 0.5;
     const fase = S.fases.find((f) => f.id === enCurso.fase);
@@ -387,6 +411,8 @@ function encabezado(titulo) {
   } else {
     panelCurso = `<p class="vacio">${t("nadaEnCurso")}</p>${siguiente ? `<div class="sub">${t("siguiente")}: <button class="dep" data-detalle="${esc(siguiente.id)}">${esc(siguiente.id)}</button> ${esc(siguiente.titulo)}</div>` : ""}`;
   }
+  const pa = pausaActiva();
+  if (pa) panelCurso += `<div class="pausa-activa">${t("enPausa")} · ${esc(t(pa.motivo) || t("pausa"))} · ${t("desde")} ${hora(ms(pa.inicio))}${pa.detalle ? ` · ${esc(pa.detalle)}` : ""}</div>`;
   const items = S.cambios.slice(0, 7).map((c) => `<li><time>${hora(ms(c.en))}</time>${iconoCambio(c.tipo)}<span class="msg" title="${esc(c.mensaje)}">${esc(c.mensaje)}</span>${c.tipo === "commit" || c.mas || c.menos ? `<span class="diff"><span class="mas">+${c.mas || 0}</span> <span class="menos">−${c.menos || 0}</span></span>` : "<span></span>"}</li>`).join("");
 
   return `<div class="eyebrow"><span>${esc(nombreProyecto)} · ${t("hojaDeRuta")}</span><span class="vivo ${S.db === "ok" ? "" : "off"}"><i></i>${S.db === "ok" ? t("enVivo") : t("sinConexion")}</span></div>
@@ -478,9 +504,28 @@ function vistaSeguimiento() {
   }
   if (span <= 7 * 864e5) for (let d = inicioDia(t0); d <= t1; d += 864e5) {
     if (d >= t0) grilla += `<div class="g-linea-dia" style="left:${x(d)}px"></div>`;
+    if (d < t0 && x(d + 864e5) < 130) continue;
     dias += `<span style="left:${Math.max(0, x(d))}px">${new Date(d).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}</span>`;
   } else dias = `<span style="left:0">${fecha(t0)} → ${fecha(t1)}</span>`;
   const ahora = Date.now();
+  const grupos2 = [];
+  let etPausas = "";
+  for (const p of tramosPausa().filter((p) => p.b >= t0 && p.a <= t1).sort((a, b) => a.a - b.a)) {
+    const g = grupos2[grupos2.length - 1];
+    if (g && p.a - g.b <= 6e4) { g.tramos.push(p); g.b = Math.max(g.b, p.b); } else grupos2.push({ a: p.a, b: p.b, tramos: [p] });
+  }
+  const pausas = grupos2.map((g) => {
+    const gx0 = Math.max(0, x(g.a)), gx1 = Math.min(ancho, x(g.b));
+    const tramos = g.tramos.map((p) => {
+      const x0 = Math.max(gx0, x(p.a)) - gx0, x1 = Math.min(gx1, x(p.b)) - gx0;
+      const nombre = t(p.motivo) || t("pausa");
+      const titulo = `${nombre} · ${fechaHora(p.a)} → ${p.fin ? hora(p.b) : t("ahora").toLowerCase()} · ${dur((p.b - p.a) / 6e4)}${p.detalle ? ` · ${p.detalle}` : ""}`;
+      // rótulo arriba, en la fila del día, solo si entra
+      if (x1 - x0 >= 70) etPausas += `<span class="g-pausa-et" style="left:${gx0 + x0}px;width:${x1 - x0}px" title="${esc(titulo)}">${esc(nombre)}</span>`;
+      return `<i class="${esc(p.motivo || "otro")}" style="left:${x0}px;width:${Math.max(1, x1 - x0)}px" title="${esc(titulo)}"></i>`;
+    }).join("");
+    return `<div class="g-pausa" style="left:${gx0}px;width:${Math.max(2, gx1 - gx0)}px">${tramos}</div>`;
+  }).join("");
   const lineaAhora = ahora >= t0 && ahora <= t1 ? `<div class="g-ahora" style="left:${x(ahora)}px"><b>${t("ahora").toUpperCase()}</b></div>` : "";
 
   const zooms = ZOOMS.map(([z]) => `<button class="chip" aria-pressed="${UI.zoom === z}" data-zoom="${z}">${ZOOM_ET[idioma()][z]}</button>`).join("");
@@ -496,7 +541,7 @@ function vistaSeguimiento() {
     <button class="chip" data-accion="atras" aria-label="‹">‹</button><button class="chip" data-accion="ahora">${t("ahora")}</button><button class="chip" data-accion="adelante" aria-label="›">›</button>
   </div>
   <div class="gantt"><div class="g-izq">${izq}</div>
-    <div class="g-der" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${lineaAhora}<div class="g-filas">${der}</div></div>
+    <div class="g-der" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${pausas}${etPausas}${lineaAhora}<div class="g-filas">${der}</div></div>
   </div>
   <div class="leyenda">
     <span><i style="background:var(--hecho)"></i>${t("hecho")}</span>
@@ -504,6 +549,7 @@ function vistaSeguimiento() {
     <span><i style="background:var(--comprometido);border:1px solid #56657a"></i>${t("comprometido")} (${t("estimado")})</span>
     <span><i style="border:1px dashed var(--provisional)"></i>${t("provisional")} (${t("estimado")})</span>
     <span><i style="border:1px solid var(--bloqueado)"></i>${t("bloqueado")}</span>
+    <span><i style="background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--tenue) 35%, transparent) 0 2px, transparent 2px 6px);border:1px dashed color-mix(in srgb, var(--tenue) 50%, transparent)"></i>${t("pausa")}</span>
     <span><i style="border-left:1px dashed var(--acento);width:1px"></i>${t("ahora")}</span>
   </div>`;
 }
@@ -517,8 +563,12 @@ function barraHtml(a, b, estado, x, ancho, extra, id, etiqueta) {
   if (x1 < 0 || x0 > ancho) return "";
   x0 = Math.max(x0, -2); x1 = Math.min(x1, ancho + 2);
   const w = Math.max(3, x1 - x0);
+  const huecos = tramosPausa().filter((p) => p.b > a && p.a < b).map((p) => {
+    const h0 = Math.max(x0, x(Math.max(a, p.a))), h1 = Math.min(x1, x(Math.min(b, p.b)));
+    return h1 - h0 >= 1 ? `<i class="bar-hueco" style="left:${h0 - x0}px;width:${h1 - h0}px"></i>` : "";
+  }).join("");
   const et2 = etiqueta && x1 + 8 < ancho ? `<span class="bar-et" style="left:${x1 + 8}px">${esc(etiqueta)}</span>` : "";
-  return `<div class="bar ${estado} ${extra}" style="left:${x0}px;width:${w}px" ${id ? `data-detalle="${esc(id)}" title="${esc(etiqueta)}"` : ""}></div>${et2}`;
+  return `<div class="bar ${estado} ${extra}" style="left:${x0}px;width:${w}px" ${id ? `data-detalle="${esc(id)}" title="${esc(etiqueta)}"` : ""}>${huecos}</div>${et2}`;
 }
 
 // ── Versiones: tablero por fases
@@ -590,7 +640,9 @@ function pintarDetalle() {
   const lineas = Object.entries(e.lineas || {}).sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...lineas.map((l) => l[1]));
   const ini = ms(e.inicio), fin = ms(e.fin);
-  const periodo = isFinite(ini) ? `${fechaHora(ini)} → ${isFinite(fin) ? fechaHora(fin) + " · " + dur((fin - ini) / 6e4) : t("en_curso").toLowerCase()}` : e.previstoMin ? `${t("previsto")} ${dur(e.previstoMin)}` : t("sinDato");
+  const efectivo = isFinite(ini) ? minutosEfectivos(ini, isFinite(fin) ? fin : Date.now()) : NaN;
+  const conPausas = isFinite(ini) && Math.abs(efectivo - ((isFinite(fin) ? fin : Date.now()) - ini) / 6e4) >= 1;
+  const periodo = isFinite(ini) ? `${fechaHora(ini)} → ${isFinite(fin) ? fechaHora(fin) + " · " + dur(efectivo) : t("en_curso").toLowerCase()}${conPausas ? ` (${t("sinPausas")})` : ""}` : e.previstoMin ? `${t("previsto")} ${dur(e.previstoMin)}` : t("sinDato");
   const bloque = (titulo, texto) => (texto ? `<h3>${titulo}</h3><p>${esc(texto)}</p>` : "");
   dlg.innerHTML = `<div class="det-cab"><div><h2 id="det-titulo"><span class="codigo">${esc(e.id)}</span>${esc(e.titulo)}</h2>
     <div class="det-meta"><span class="sello" style="color:${COLOR_ESTADO[e.estado]}">${t(e.estado)}</span>${fase ? `<span>${esc(fase.codigo ? `${fase.codigo} · ${fase.nombre}` : fase.nombre)}</span>` : ""}${(e.disciplinas || []).map((d) => `<span>${esc(nombreDisc(d))}</span>`).join("")}${e.agente ? `<span>${esc(e.agente)}</span>` : ""}</div></div>
@@ -689,6 +741,7 @@ irA(location.hash.slice(1));
   lista("entregables", null, "entregables");
   lista("cambios", db.collection("cambios").orderBy("en", "desc").limit(300), "cambios");
   lista("notas", db.collection("notas").orderBy("en", "desc").limit(500), "notas");
+  lista("pausas", db.collection("pausas").orderBy("inicio", "desc").limit(500), "pausas");
   render();
 })();
 </script>

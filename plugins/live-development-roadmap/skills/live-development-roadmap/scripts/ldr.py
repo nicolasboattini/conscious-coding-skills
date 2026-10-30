@@ -13,6 +13,9 @@ Comandos:
   commits --desde REV         lo mismo para cada commit desde REV (para cargar la historia)
   sincronizado                marca que el roadmap quedó al día con HEAD (lo lee el hook de cierre de turno)
   pendiente                   lista lo que falta registrar; sale con código 1 si hay algo
+
+Con `init --ignorar PATRON` (repetible) se marcan archivos que cambian solos
+(ej. next-env.d.ts) para que el hook de cierre no los cuente como trabajo.
 """
 from __future__ import annotations
 
@@ -132,6 +135,8 @@ def cmd_init(args) -> int:
         valor = getattr(args, campo)
         if valor is not None:
             cfg[campo] = valor
+    if args.ignorar:
+        cfg["ignorar"] = [p for p in args.ignorar if p]
     if args.disciplina:
         reglas = []
         for d in args.disciplina:
@@ -196,16 +201,48 @@ def pendientes(cwd: str | None = None) -> tuple[dict | None, list[str]]:
     return cfg, [l for l in lista.splitlines() if l.strip()]
 
 
+def cambios_sin_commitear(cwd: str | None = None, desde: float = 0.0) -> list[str]:
+    """Archivos con cambios sin commitear (modificados o nuevos) tocados
+    después de `desde` (timestamp). Cubre lo editado por consola, que no pasa
+    por las herramientas de edición. Omite los patrones de `ignorar`."""
+    repo, cfg = leer_config(cwd)
+    if not repo or not cfg:
+        return []
+    ignorar = cfg.get("ignorar", [])
+    estado = git("status", "--porcelain", "--untracked-files=all", cwd=str(repo)) or ""
+    salida = []
+    for fila in estado.splitlines():
+        ruta = fila[3:].split(" -> ")[-1].strip().strip('"')
+        if not ruta or any(fnmatch.fnmatch(ruta, p) for p in ignorar):
+            continue
+        try:
+            if (repo / ruta).stat().st_mtime <= desde:
+                continue
+        except OSError:
+            pass  # borrado: cuenta
+        salida.append(ruta)
+    return sorted(salida)
+
+
 def cmd_pendiente(args) -> int:
     cfg, lista = pendientes()
     if not cfg:
         print("Este repo no tiene roadmap.")
         return 0
-    if not lista:
-        print("Nada pendiente: el roadmap está al día con HEAD.")
+    try:
+        desde = datetime.fromisoformat(cfg.get("ultimaSincronizacion") or "").timestamp()
+    except ValueError:
+        desde = 0.0
+    sucios = cambios_sin_commitear(desde=desde)
+    if not lista and not sucios:
+        print("Nada pendiente: el roadmap está al día.")
         return 0
-    print("Commits sin registrar en el roadmap:")
-    print("\n".join(f"  {l}" for l in lista))
+    if lista:
+        print("Commits sin registrar en el roadmap:")
+        print("\n".join(f"  {l}" for l in lista))
+    if sucios:
+        print("Cambios sin commitear posteriores a la última actualización:")
+        print("\n".join(f"  {r}" for r in sucios))
     return 1
 
 
@@ -223,6 +260,7 @@ def main() -> int:
     pi.add_argument("--redaccion", choices=["simple", "tech"], help="simple: para gerencia o áreas no técnicas; tech: detalle técnico")
     pi.add_argument("--prefijo", help="prefijo de los códigos de entregable (por defecto T → T001)")
     pi.add_argument("--disciplina", action="append", help="id:Nombre:patron1,patron2 (repetible; la primera que coincide gana)")
+    pi.add_argument("--ignorar", action="append", help="patrón de archivos que cambian solos y no cuentan como trabajo (repetible)")
     pi.set_defaults(f=cmd_init)
     pc = sub.add_parser("commit")
     pc.add_argument("rev", nargs="?", default="HEAD")

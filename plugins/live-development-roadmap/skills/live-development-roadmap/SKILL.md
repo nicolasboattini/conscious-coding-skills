@@ -1,6 +1,6 @@
 ---
 name: live-development-roadmap
-description: "Tablero en vivo del desarrollo de un proyecto (hoja de ruta tipo Star Citizen): un artifact de claude.ai con Gantt, tarea en curso, avance, últimos commits, tablero por fases y notas, que Claude mantiene al día mientras trabaja. Usar cuando el usuario pide crear o actualizar el roadmap, tablero, hoja de ruta o seguimiento de un proyecto, cuando se aprueba un plan en un repo que tiene roadmap, y en cada inicio o fin de entregable, commit, PR, deploy o decisión dentro de ese repo. No hace nada en repos sin roadmap."
+description: "Tablero en vivo del desarrollo de un proyecto (hoja de ruta tipo Star Citizen): un artifact de claude.ai con Gantt, tarea en curso, avance, últimos commits, tablero por fases y notas, que Claude mantiene al día mientras trabaja. Usar cuando el usuario pide crear o actualizar el roadmap, tablero, hoja de ruta o seguimiento de un proyecto, cuando se aprueba un plan en un repo que tiene roadmap, cuando se pide cualquier cambio de código en ese repo aunque no haya plan (un arreglo, un ajuste, una función suelta), y en cada inicio o fin de entregable, commit, PR, deploy, decisión o pausa (límite de uso, espera) dentro de ese repo. No hace nada en repos sin roadmap."
 ---
 
 # Live development roadmap
@@ -50,6 +50,28 @@ Cuando el usuario aprueba un plan (o una tanda de cambios), antes de programar:
 - **Notas:** cada decisión del relevamiento como `decision`; los riesgos conocidos como `riesgo`.
 - **Un cambio** de tipo `plan` ("Plan aprobado: N entregables en M fases").
 
+## Trabajo suelto (sin plan)
+
+No todo pasa por un plan: muchas veces el usuario pide un arreglo, un ajuste o una función chica en la charla. **Eso también va al tablero, sin que lo pida**, igual que lo planificado:
+
+- **Antes de empezar**, cada pedido concreto es un entregable `en_curso` (o `comprometido` si van varios en cola), con `titulo`, `incluye`, `hechoCuando`, `previstoMin` y `disciplinas`. Si el pedido trae varias cosas independientes, un entregable por cada una.
+- **Dónde va:** en la versión en desarrollo (`meta/proyecto.versionActual`), en la fase de trabajo suelto de esa versión (`fases/<version>-sueltos`, nombre "Ajustes y correcciones", ubicada antes del cierre). Creala si no existe. Si no hay versión en desarrollo, abrí la siguiente (patch o la que corresponda según el versionado del proyecto) con estado `en_desarrollo`.
+- **Si corrige algo de un entregable anterior**, `dependeDe` apunta a ese entregable.
+- **Cierre:** como cualquier otro: commits con `ldr.py commit`, `verificacion`, `estado: "hecho"`, `fin`.
+
+Solo queda afuera lo que no cambia el proyecto: una consulta, una explicación, una revisión sin cambios.
+
+## Pausas
+
+Cuando el trabajo se corta, el Gantt lo muestra como una franja rayada y ese tiempo no cuenta en la duración de los entregables, en el "lleva" de lo que está en curso ni en el ritmo. Se registran en `pausas`:
+
+- **`limite_uso`:** el turno se cortó por el límite de uso. El hook `StopFailure` anota la hora del corte, y al volver el trabajo te pasa inicio y fin. Si el mensaje del límite dice a qué hora se libera y el usuario volvió más tarde, partila en dos: `limite_uso` hasta la liberación y `espera_usuario` hasta la vuelta.
+- **`espera_usuario`:** con algo en curso, la charla quedó esperando una respuesta o una prueba del usuario más de 30 minutos. El hook de inicio de turno avisa cuánto pasó.
+- **`fuera_de_horario`:** la ausencia cae de noche o en un fin de semana.
+- **`otro`:** cualquier otro corte (sobrecarga de la API, un error).
+
+Sin el plugin (solo la skill), mirá vos las horas: si entre tu último mensaje y el siguiente pedido pasó más de media hora con algo en curso, registrala igual.
+
 ## Mientras se trabaja
 
 | Momento | Qué escribir |
@@ -60,13 +82,24 @@ Cuando el usuario aprueba un plan (o una tanda de cambios), antes de programar:
 | Tomás capturas de una verificación | Subilas como assets del artifact y agregalas a `capturas` (la mejor primero). **Solo con datos de prueba**, nunca datos reales de clientes ni de personas |
 | Terminás un entregable | `estado: "hecho"`, `fin` |
 | Algo espera al usuario o a un tercero | `estado: "bloqueado"` con `motivoBloqueo`. Al destrabarse vuelve a `comprometido` o `en_curso` |
+| El trabajo se corta (límite de uso, espera larga) | Un documento en `pausas` (ver "Pausas") |
 | Algo sale del plan | `estado: "descartado"` (no se borra) y una nota `decision` con el porqué |
 | El usuario decide algo en la charla | Nota `decision`, breve |
 | Reestimás o cambia el alcance | Ajustá `previstoMin` o los entregables, y un cambio de tipo `plan`. Si cambia lo aprobado, preguntá antes |
 | PR, merge, deploy | Un cambio del tipo correspondiente. Con el PR, `versiones/<id>.pr`; con el deploy, `estado: "publicada"` y `publicadaEn` |
 | Terminás la tarea que te pidieron | Una nota `resumen`: qué se hizo, qué quedó y qué sigue. No esperes a que el usuario diga "cerramos" |
 
-Después de cada actualización: `meta/proyecto.actualizadoEn` y `python scripts/ldr.py sincronizado`. Si el plugin está instalado con su hook, al cerrar un turno con commits o archivos editados sin registrar, el hook te frena una vez: actualizá el tablero o explicá en una línea por qué no corresponde (una consulta, un cambio que no es del plan).
+Después de cada actualización: `meta/proyecto.actualizadoEn` y `python scripts/ldr.py sincronizado`.
+
+El tablero se actualiza **mientras** se trabaja, no al final: el entregable se abre antes de tocar código, y cada commit se registra apenas se hace. Con el plugin instalado, los hooks lo recuerdan:
+
+- al empezar cada pedido;
+- después de cada `git commit`;
+- al cerrar el turno, si quedaron commits o cambios sin registrar. En ese caso te frenan una vez: registralos, aunque no haya plan.
+
+Solo se deja pasar sin registrar si el usuario lo pidió o si los cambios no son de esta sesión, y se dice en una línea.
+
+`ldr.py init --ignorar <patrón>` excluye archivos que cambian solos (ej. `next-env.d.ts`).
 
 ## Redacción
 

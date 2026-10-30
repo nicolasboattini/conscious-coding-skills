@@ -95,6 +95,19 @@ La página lee los últimos 300. La base admite 25.000 documentos por artifact: 
 | `texto` | texto | |
 | `version` | texto | |
 
+## `pausas/<id>`
+
+Tramos sin trabajo: el Gantt los dibuja como franjas rayadas y su tiempo no cuenta en la duración de los entregables, en el "lleva" de lo que está en curso ni en el ritmo. Id: `p-<fecha compacta>` (ej. `p-20261030-1049`).
+
+| Campo | Tipo | Nota |
+|---|---|---|
+| `inicio` | fecha | |
+| `fin` | fecha, opcional | sin `fin` = pausa abierta (el panel "Ahora mismo" la muestra) |
+| `motivo` | `"limite_uso"` \| `"espera_usuario"` \| `"fuera_de_horario"` \| `"otro"` | |
+| `detalle` | texto, opcional | ej. "Límite de 5 h; se liberaba 13:40" |
+| `version` | texto | |
+| `entregable` | texto, opcional | el que estaba en curso |
+
 ## Escrituras
 
 - `db_write` admite hasta 50 operaciones por llamada, todas o ninguna. Para un documento que **ya existe**, cada operación lleva `ifVersion` (la versión de la última lectura o escritura). Leé antes con `db_get` o `db_query` si no la tenés.
