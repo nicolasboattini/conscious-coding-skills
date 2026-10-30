@@ -7,7 +7,7 @@ Un tablero en vivo por proyecto, inspirado en el [Progress Tracker de Star Citiz
   - **ahora mismo en curso**, con lo que lleva contra lo previsto;
   - **avance** con fecha estimada de cierre según el ritmo real;
   - **últimos cambios**, con los `+/−` de cada commit;
-  - **Gantt** por fases o por disciplinas, con zoom de 6 h a 3 meses. Lo pendiente se proyecta después de "ahora".
+  - **Gantt** por fases o por disciplinas, con zoom de 1 h a 3 meses: se arrastra para moverse en el tiempo, la rueda del mouse acerca o aleja (de a una hora hasta un día) y en el celular se arrastra con el dedo y se pellizca. Lo pendiente se proyecta después de "ahora".
 - **Detalle** de cada entregable:
   - capturas de la verificación;
   - qué incluye y "hecho cuando";

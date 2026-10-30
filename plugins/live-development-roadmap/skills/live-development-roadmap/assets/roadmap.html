@@ -102,7 +102,10 @@ h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-
 .caret { width: 10px; transition: transform .15s; display: inline-block; color: var(--tenue); }
 .abierta .caret { transform: rotate(90deg); }
 .cuad { width: 8px; height: 8px; flex: none; }
-.g-der { position: relative; overflow: hidden; min-width: 0; }
+.g-der { position: relative; overflow: hidden; min-width: 0; cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.g-der.arrastrando { cursor: grabbing; }
+.g-der.arrastrando .bar { cursor: grabbing; }
+.g-zoom { position: absolute; right: 10px; top: 6px; font-family: var(--mono); font-size: 11px; color: var(--tenue); letter-spacing: 0; text-transform: none; font-weight: 400; }
 .g-dias, .g-horas { position: absolute; left: 0; right: 0; font-family: var(--mono); font-size: 11px; color: var(--tenue); }
 .g-dias { top: 6px; height: 18px; }
 .g-horas { top: 30px; height: 18px; }
@@ -191,6 +194,7 @@ dialog::backdrop { background: rgba(3, 5, 8, .72); }
   .paneles { grid-template-columns: 1fr; }
   .panel + .panel { border-left: 0; border-top: 1px solid var(--linea); }
   .gantt { grid-template-columns: 180px minmax(0, 1fr); }
+  .g-cab { padding: 0 10px 8px; }
   .det-cuerpo { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
@@ -201,6 +205,13 @@ dialog::backdrop { background: rgba(3, 5, 8, .72); }
   .nav-btn[aria-current="page"] { border-bottom-color: var(--acento); }
   .nav-btn.abajo { margin-top: 0; }
   main { padding: 16px; }
+  .gantt { grid-template-columns: 116px minmax(0, 1fr); }
+  .g-fila { padding: 0 8px; gap: 6px; }
+  .g-fila.tarea { padding-left: 12px; }
+  .g-fila.tarea .codigo, .g-fila.fase .cnt { display: none; }
+  .g-fila.fase { font-size: 12px; letter-spacing: .04em; }
+  .g-cab { font-size: 10.5px; letter-spacing: .06em; }
+  .g-zoom { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .vivo i { animation: none; } .caret { transition: none; } }
 </style>
@@ -239,7 +250,7 @@ const TXT = {
     queIncluye: "Qué incluye", hechoCuando: "Hecho cuando", verificacion: "Verificación", fechas: "Fechas", periodo: "Período", dependeDe: "Depende de",
     lineasPorDisc: "líneas cambiadas", commits: "Commits", capturas: "Capturas", sinDato: "—", cerrar: "Cerrar", todas: "Todas",
     decision: "Decisión", pendiente: "Pendiente", riesgo: "Riesgo", resumen: "Resumen", motivo: "Motivo",
-    pausa: "Pausa", enPausa: "En pausa", sinPausas: "sin pausas", limite_uso: "Límite de uso", espera_usuario: "Esperando al usuario", fuera_de_horario: "Fuera de horario", otro: "Pausa",
+    zoomAyuda: "Arrastrá para moverte; rueda del mouse o pellizco para acercar o alejar", pausa: "Pausa", enPausa: "En pausa", sinPausas: "sin pausas", limite_uso: "Límite de uso", espera_usuario: "Esperando al usuario", fuera_de_horario: "Fuera de horario", otro: "Pausa",
     comoLeer: "Cómo leer este tablero", sinDb: "Este tablero lee sus datos de la base del artifact. Abrilo en claude.ai con tu sesión iniciada para verlos.",
     sinDatos: "Todavía no hay datos. Claude carga la versión, sus fases y entregables cuando se aprueba un plan.",
     guia: [
@@ -248,6 +259,7 @@ const TXT = {
       "Provisional: agregado sin aprobar o de fases siguientes; puede moverse.",
       "Bloqueado: espera algo externo (una respuesta, un permiso, un deploy). Descartado: salió del plan y queda registrado.",
       "Las franjas rayadas del Gantt son pausas del trabajo (límite de uso, esperando al usuario, fuera de horario). Su tiempo no cuenta en la duración de las tareas ni en el ritmo.",
+      "En el Gantt: arrastrá para moverte en el tiempo; con la rueda del mouse (o pellizcando en el celular) acercás o alejás, de a una hora hasta un día.",
       "La fecha estimada de cierre se recalcula con el ritmo real: el promedio de minutos de lo ya hecho."
     ],
   },
@@ -263,7 +275,7 @@ const TXT = {
     queIncluye: "What it includes", hechoCuando: "Done when", verificacion: "Verification", fechas: "Dates", periodo: "Period", dependeDe: "Depends on",
     lineasPorDisc: "lines changed", commits: "Commits", capturas: "Screenshots", sinDato: "—", cerrar: "Close", todas: "All",
     decision: "Decision", pendiente: "Pending", riesgo: "Risk", resumen: "Summary", motivo: "Reason",
-    pausa: "Pause", enPausa: "Paused", sinPausas: "excluding pauses", limite_uso: "Usage limit", espera_usuario: "Waiting on user", fuera_de_horario: "Off hours", otro: "Pause",
+    zoomAyuda: "Drag to move; mouse wheel or pinch to zoom", pausa: "Pause", enPausa: "Paused", sinPausas: "excluding pauses", limite_uso: "Usage limit", espera_usuario: "Waiting on user", fuera_de_horario: "Off hours", otro: "Pause",
     comoLeer: "How to read this board", sinDb: "This board reads its data from the artifact's database. Open it on claude.ai while signed in to see it.",
     sinDatos: "No data yet. Claude loads the version, its phases and deliverables once a plan is approved.",
     guia: [
@@ -272,6 +284,7 @@ const TXT = {
       "Tentative: added without approval or in later phases; it may move.",
       "Blocked: waiting on something external (an answer, a permission, a deploy). Dropped: removed from the plan, kept on record.",
       "Hatched bands on the Gantt are work pauses (usage limit, waiting on the user, off hours). Their time is left out of task durations and the pace.",
+      "On the Gantt: drag to move through time; the mouse wheel (or a pinch on a phone) zooms in or out, one hour at a time up to a day.",
       "The estimated finish date follows the actual pace: the average minutes of what is already done."
     ],
   },
@@ -282,9 +295,26 @@ const ZOOMS = [["6h", 6 * 36e5], ["1d", 24 * 36e5], ["3d", 72 * 36e5], ["1s", 7 
 const ZOOM_ET = { es: { "6h": "6 h", "1d": "1 día", "3d": "3 días", "1s": "1 semana", "1m": "1 mes", "3m": "3 meses" }, en: { "6h": "6 h", "1d": "1 day", "3d": "3 days", "1s": "1 week", "1m": "1 month", "3m": "3 months" } };
 
 const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], pausas: [], db: "cargando" };
-const UI = { vista: "seguimiento", tab: "fases", zoom: "1d", corrimiento: 0, plegadas: new Set(), desplegadasTodas: null, busqueda: "", version: null, estados: new Set(ESTADOS), catsAbiertas: new Set(), tipoNota: "todas", detalle: null, captura: 0 };
-try { const g = JSON.parse(localStorage.getItem("ldr-ui") || "{}"); if (g.zoom) UI.zoom = g.zoom; if (g.tab) UI.tab = g.tab; } catch (e) {}
-const guardarUI = () => { try { localStorage.setItem("ldr-ui", JSON.stringify({ zoom: UI.zoom, tab: UI.tab })); } catch (e) {} };
+const UI = { vista: "seguimiento", tab: "fases", span: 24 * 36e5, corrimiento: 0, plegadas: new Set(), desplegadasTodas: null, busqueda: "", version: null, estados: new Set(ESTADOS), catsAbiertas: new Set(), tipoNota: "todas", detalle: null, captura: 0 };
+// Zoom del Gantt: un período continuo (UI.span, en ms) entre 1 hora y 3
+// meses. Los botones fijan uno de los preestablecidos; la rueda y el pellizco
+// lo ajustan de a poco.
+const SPAN_MIN = 36e5, SPAN_MAX = 91 * 864e5;
+const acotarSpan = (v) => Math.min(SPAN_MAX, Math.max(SPAN_MIN, v));
+try {
+  const g = JSON.parse(localStorage.getItem("ldr-ui") || "{}");
+  if (isFinite(g.span)) UI.span = acotarSpan(g.span);
+  else if (g.zoom) { const z = ZOOMS.find((x) => x[0] === g.zoom); if (z) UI.span = z[1]; }
+  if (g.tab) UI.tab = g.tab;
+} catch (e) {}
+const guardarUI = () => { try { localStorage.setItem("ldr-ui", JSON.stringify({ span: UI.span, tab: UI.tab })); } catch (e) {} };
+// Ancho de la columna de títulos: el mismo que fija el CSS en cada tamaño.
+const anchoIzq = () => (window.innerWidth <= 520 ? 116 : window.innerWidth <= 900 ? 180 : 300);
+// Ancho de la línea de tiempo, en px.
+const anchoTiempo = () => Math.max(160, (document.getElementById("raiz").clientWidth || 1000) - anchoIzq() - 2);
+// Marcas de la escala: el paso más chico que deja ~70 px entre etiquetas.
+const PASOS = [15 * 6e4, 30 * 6e4, 36e5, 2 * 36e5, 3 * 36e5, 6 * 36e5, 12 * 36e5, 864e5, 2 * 864e5, 7 * 864e5, 14 * 864e5, 30 * 864e5];
+const pasoEscala = (span, ancho) => PASOS.find((p) => (p / span) * ancho >= 70) || PASOS[PASOS.length - 1];
 
 const idioma = () => (S.meta && S.meta.idioma === "en" ? "en" : "es");
 const t = (k) => TXT[idioma()][k] ?? TXT.es[k] ?? k;
@@ -457,13 +487,13 @@ function vistaSeguimiento() {
   const grupos = UI.tab === "disciplinas"
     ? disciplinas().map((d) => ({ id: "d:" + d.id, codigo: "", nombre: d.nombre, ents: ents.filter((e) => (e.disciplinas || []).includes(d.id)) })).concat([{ id: "d:-", codigo: "", nombre: idioma() === "en" ? "No discipline" : "Sin disciplina", ents: ents.filter((e) => !(e.disciplinas || []).length) }]).filter((g) => g.ents.length)
     : fases.map((f) => ({ id: f.id, codigo: f.codigo || "", nombre: f.nombre, ents: ents.filter((e) => e.fase === f.id) }));
-  const ancho = Math.max(320, (document.getElementById("raiz").clientWidth || 1000) - 300 - 2);
-  const span = ZOOMS.find((z) => z[0] === UI.zoom)[1];
+  const ancho = anchoTiempo();
+  const span = UI.span;
   const t0 = Date.now() - span * 0.6 + UI.corrimiento;
   const t1 = t0 + span;
   const x = (tm) => ((tm - t0) / span) * ancho;
 
-  let izq = `<div class="g-cab">${esc(et("version", "Versión"))} · ${t("hechas")}</div>`;
+  let izq = `<div class="g-cab">${esc(et("version", "Versión"))} · ${t("hechas")}<span class="g-zoom" title="${t("zoomAyuda")}">⟷ ${dur(span / 6e4)}</span></div>`;
   let der = "";
   for (const g of grupos) {
     const visibles = g.ents.filter(coincide);
@@ -494,7 +524,7 @@ function vistaSeguimiento() {
     }
   }
   // escala: días arriba, marcas abajo
-  const paso = { "6h": 36e5 / 2, "1d": 2 * 36e5, "3d": 6 * 36e5, "1s": 864e5, "1m": 7 * 864e5, "3m": 14 * 864e5 }[UI.zoom];
+  const paso = pasoEscala(span, ancho);
   let marcas = "", grilla = "", dias = "";
   const inicioDia = (tm) => { const d = new Date(tm); d.setHours(0, 0, 0, 0); return d.getTime(); };
   for (let tm = Math.ceil(t0 / paso) * paso; tm <= t1; tm += paso) {
@@ -502,7 +532,7 @@ function vistaSeguimiento() {
     marcas += `<span style="left:${x(tm)}px">${etq}</span>`;
     grilla += `<div class="g-grilla" style="left:${x(tm)}px"></div>`;
   }
-  if (span <= 7 * 864e5) for (let d = inicioDia(t0); d <= t1; d += 864e5) {
+  if (span <= 10 * 864e5) for (let d = inicioDia(t0); d <= t1; d += 864e5) {
     if (d >= t0) grilla += `<div class="g-linea-dia" style="left:${x(d)}px"></div>`;
     if (d < t0 && x(d + 864e5) < 130) continue;
     dias += `<span style="left:${Math.max(0, x(d))}px">${new Date(d).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}</span>`;
@@ -528,7 +558,7 @@ function vistaSeguimiento() {
   }).join("");
   const lineaAhora = ahora >= t0 && ahora <= t1 ? `<div class="g-ahora" style="left:${x(ahora)}px"><b>${t("ahora").toUpperCase()}</b></div>` : "";
 
-  const zooms = ZOOMS.map(([z]) => `<button class="chip" aria-pressed="${UI.zoom === z}" data-zoom="${z}">${ZOOM_ET[idioma()][z]}</button>`).join("");
+  const zooms = ZOOMS.map(([z, v]) => `<button class="chip" aria-pressed="${UI.span === v}" data-zoom="${z}">${ZOOM_ET[idioma()][z]}</button>`).join("");
   return encabezado(t("tituloSeg")) + `
   <div class="barra-herr"><div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="${UI.tab === "fases"}" data-tab="fases">${esc(et("fasePlural", idioma() === "en" ? "Phases" : "Fases"))}</button>
@@ -541,7 +571,7 @@ function vistaSeguimiento() {
     <button class="chip" data-accion="atras" aria-label="‹">‹</button><button class="chip" data-accion="ahora">${t("ahora")}</button><button class="chip" data-accion="adelante" aria-label="›">›</button>
   </div>
   <div class="gantt"><div class="g-izq">${izq}</div>
-    <div class="g-der" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${pausas}${etPausas}${lineaAhora}<div class="g-filas">${der}</div></div>
+    <div class="g-der${UI.arrastre && UI.arrastre.movio ? " arrastrando" : ""}" title="${t("zoomAyuda")}" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${pausas}${etPausas}${lineaAhora}<div class="g-filas">${der}</div></div>
   </div>
   <div class="leyenda">
     <span><i style="background:var(--hecho)"></i>${t("hecho")}</span>
@@ -695,14 +725,14 @@ document.addEventListener("click", (ev) => {
   if (d.ir) { location.hash = d.ir; irA(d.ir); }
   else if (d.detalle) abrirDetalle(d.detalle);
   else if (d.plegar) { UI.plegadas.has(d.plegar) ? UI.plegadas.delete(d.plegar) : UI.plegadas.add(d.plegar); render(); }
-  else if (d.zoom) { UI.zoom = d.zoom; UI.corrimiento = 0; guardarUI(); render(); }
+  else if (d.zoom) { UI.span = ZOOMS.find((z) => z[0] === d.zoom)[1]; UI.corrimiento = 0; guardarUI(); render(); }
   else if (d.tab) { UI.tab = d.tab; UI.plegadas.clear(); guardarUI(); render(); }
   else if (d.estado) { UI.estados.has(d.estado) ? UI.estados.delete(d.estado) : UI.estados.add(d.estado); render(); }
   else if (d.cat) { UI.catsAbiertas.has(d.cat) ? UI.catsAbiertas.delete(d.cat) : UI.catsAbiertas.add(d.cat); render(); }
   else if (d.nota) { UI.tipoNota = d.nota; render(); }
   else if (d.captura) { UI.captura = Number(d.captura); pintarDetalle(); }
   else if (d.accion) {
-    const span = ZOOMS.find((z) => z[0] === UI.zoom)[1];
+    const span = UI.span;
     if (d.accion === "cerrar") { document.getElementById("detalle").close(); }
     else if (d.accion === "atras") { UI.corrimiento -= span / 2; render(); }
     else if (d.accion === "adelante") { UI.corrimiento += span / 2; render(); }
@@ -718,6 +748,99 @@ document.addEventListener("click", (ev) => {
     }
   }
 });
+// Zoom anclado: el instante bajo el puntero (a px del borde) queda en su lugar.
+function zoomEn(nuevoSpan, px) {
+  const ancho = anchoTiempo();
+  const ahora = Date.now();
+  const t0 = ahora - UI.span * 0.6 + UI.corrimiento;
+  const tm = t0 + (px / ancho) * UI.span;
+  const s2 = acotarSpan(nuevoSpan);
+  UI.corrimiento = tm - (px / ancho) * s2 - ahora + s2 * 0.6;
+  UI.span = s2;
+  render();
+  clearTimeout(zoomEn.guardar);
+  zoomEn.guardar = setTimeout(guardarUI, 400);
+}
+const enLineaDeTiempo = (el) => el && el.closest && el.closest(".g-der");
+const pxEnLinea = (clientX) => { const g = document.querySelector(".g-der"); return g ? clientX - g.getBoundingClientRect().left : 0; };
+// Rueda: un "click" de rueda = 1 hora mientras el período es de hasta un día;
+// más allá crece en proporción (1/12 del período, redondeado a la hora), para
+// que llegar a una semana o un mes no lleve cientos de clicks. El trackpad
+// suma su recorrido hasta completar un click. Horizontal o con Shift: mueve.
+let acumRueda = 0;
+document.addEventListener("wheel", (ev) => {
+  if (!enLineaDeTiempo(ev.target)) return;
+  ev.preventDefault();
+  const unidad = ev.deltaMode === 1 ? 3 : ev.deltaMode === 2 ? 1 : 100;
+  const horizontal = ev.shiftKey || Math.abs(ev.deltaX) > Math.abs(ev.deltaY);
+  if (horizontal) {
+    const d = ev.shiftKey && !ev.deltaX ? ev.deltaY : ev.deltaX;
+    UI.corrimiento += (d * (unidad === 100 ? 1 : 40) * UI.span) / anchoTiempo();
+    render();
+    return;
+  }
+  acumRueda += ev.deltaY / unidad;
+  const clicks = Math.trunc(acumRueda);
+  if (!clicks) return;
+  acumRueda -= clicks;
+  let span = UI.span;
+  for (let i = 0; i < Math.abs(clicks); i++) {
+    const paso = span < 24 * 36e5 || (span === 24 * 36e5 && clicks < 0) ? 36e5 : Math.round(span / 12 / 36e5) * 36e5;
+    span = acotarSpan(span + Math.sign(clicks) * paso);
+  }
+  zoomEn(span, pxEnLinea(ev.clientX));
+}, { passive: false });
+// Arrastrar (mouse o dedo) mueve; dos dedos pellizcan. Más de 4 px de
+// recorrido cuenta como arrastre y el click que le sigue no abre el detalle.
+const punteros = new Map();
+document.addEventListener("pointerdown", (ev) => {
+  if (!enLineaDeTiempo(ev.target) || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+  punteros.set(ev.pointerId, ev.clientX);
+  if (punteros.size === 1) UI.arrastre = { x: ev.clientX, corr: UI.corrimiento, movio: false };
+  else if (punteros.size === 2) {
+    const xs = [...punteros.values()];
+    UI.arrastre = { pellizco: true, dist: Math.max(20, Math.abs(xs[0] - xs[1])), span: UI.span, movio: true };
+  }
+});
+document.addEventListener("pointermove", (ev) => {
+  if (!punteros.has(ev.pointerId) || !UI.arrastre) return;
+  punteros.set(ev.pointerId, ev.clientX);
+  const a = UI.arrastre;
+  if (a.pellizco && punteros.size >= 2) {
+    const xs = [...punteros.values()];
+    const dist = Math.max(20, Math.abs(xs[0] - xs[1]));
+    zoomEn(a.span * (a.dist / dist), pxEnLinea((xs[0] + xs[1]) / 2));
+    return;
+  }
+  if (a.pellizco) return;
+  const dx = ev.clientX - a.x;
+  if (!a.movio && Math.abs(dx) < 5) return;
+  a.movio = true;
+  UI.corrimiento = a.corr - (dx * UI.span) / anchoTiempo();
+  render();
+});
+const soltar = (ev) => {
+  if (!punteros.delete(ev.pointerId)) return;
+  if (punteros.size === 0 && UI.arrastre) {
+    const movio = UI.arrastre.movio;
+    UI.arrastre = null;
+    if (movio) {
+      // El click que el navegador manda al soltar llega en el acto; uno
+      // posterior es un click nuevo y abre el detalle normalmente.
+      soltar.finArrastre = performance.now();
+      render();
+    }
+  } else if (punteros.size === 1 && UI.arrastre && UI.arrastre.pellizco) {
+    const [x] = punteros.values();
+    UI.arrastre = { x, corr: UI.corrimiento, movio: true };
+  }
+};
+document.addEventListener("pointerup", soltar);
+document.addEventListener("pointercancel", soltar);
+// El click que cierra un arrastre no abre el entregable que quedó debajo.
+document.addEventListener("click", (ev) => {
+  if (performance.now() - (soltar.finArrastre || -1e9) < 60 && enLineaDeTiempo(ev.target)) { ev.stopPropagation(); ev.preventDefault(); }
+}, true);
 document.addEventListener("keydown", (ev) => {
   if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[role=button][data-detalle],[role=button][data-plegar]")) { ev.preventDefault(); ev.target.click(); }
 });
