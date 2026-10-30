@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Skills y plugins para trabajar con Claude Code de forma consciente: planificar, dejar registro y ver en vivo qué se está haciendo.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "live-development-roadmap",
       "source": "./plugins/live-development-roadmap",
       "description": "Tablero en vivo del desarrollo (Gantt, tarea en curso, avance, commits, tablero por fases y notas) que Claude mantiene al día mientras trabaja.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "productivity"
     }
   ]
