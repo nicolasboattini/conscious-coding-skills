@@ -89,6 +89,7 @@ h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-
 .chip.estado[aria-pressed="true"] { background: var(--panel-2); color: var(--texto); }
 .chip .pt { width: 8px; height: 8px; display: inline-block; }
 .espacio { flex: 1; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .select { background: var(--panel); border: 1px solid var(--linea); color: var(--texto); padding: 7px 10px; font: inherit; }
 .gantt { margin-top: 10px; border: 1px solid var(--linea); display: grid; grid-template-columns: 300px minmax(0, 1fr); background: var(--panel); }
 .g-izq { border-right: 1px solid var(--linea); min-width: 0; }
@@ -241,7 +242,7 @@ const TXT = {
   es: {
     seguimiento: "Seguimiento", versiones: "Versiones", notas: "Notas", hojaDeRuta: "Hoja de ruta", enVivo: "En vivo", sinConexion: "Sin conexión",
     tituloSeg: "Seguimiento del progreso", tituloVer: "Vista de versiones", tituloNotas: "Notas y decisiones", actualizado: "Actualizado", hace: "hace",
-    versionDev: "Versión en desarrollo", de: "de", tareas: "tareas", decisiones: "decisiones", lineas: "líneas", ultimoCommit: "último commit",
+    versionDev: "Versión en desarrollo", versionPub: "Versión publicada", de: "de", tareas: "tareas", decisiones: "decisiones", lineas: "líneas", ultimoCommit: "último commit",
     ahoraMismo: "Ahora mismo · en curso", empezo: "Empezó a las", lleva: "lleva", previsto: "previsto", nadaEnCurso: "Nada en curso.", siguiente: "Sigue",
     fasesCompletas: "Fases completadas", estimada: "estimada", ritmo: "Ritmo real", minPorTarea: "min por tarea", enDesarrolloDesde: "En desarrollo desde",
     ultimosCambios: "Últimos cambios", sinCambios: "Sin cambios todavía.", buscar: "Buscar", desplegar: "Desplegar", plegar: "Plegar", ahora: "Ahora",
@@ -266,7 +267,7 @@ const TXT = {
   en: {
     seguimiento: "Tracking", versiones: "Versions", notas: "Notes", hojaDeRuta: "Roadmap", enVivo: "Live", sinConexion: "Offline",
     tituloSeg: "Progress tracker", tituloVer: "Version view", tituloNotas: "Notes and decisions", actualizado: "Updated", hace: "",
-    versionDev: "Version in development", de: "of", tareas: "tasks", decisiones: "decisions", lineas: "lines", ultimoCommit: "last commit",
+    versionDev: "Version in development", versionPub: "Released version", de: "of", tareas: "tasks", decisiones: "decisions", lineas: "lines", ultimoCommit: "last commit",
     ahoraMismo: "Right now · in progress", empezo: "Started at", lleva: "elapsed", previsto: "planned", nadaEnCurso: "Nothing in progress.", siguiente: "Next",
     fasesCompletas: "Phases completed", estimada: "estimated", ritmo: "Actual pace", minPorTarea: "min per task", enDesarrolloDesde: "In development since",
     ultimosCambios: "Latest changes", sinCambios: "No changes yet.", buscar: "Search", desplegar: "Expand", plegar: "Collapse", ahora: "Now",
@@ -448,7 +449,7 @@ function encabezado(titulo) {
   return `<div class="eyebrow"><span>${esc(nombreProyecto)} · ${t("hojaDeRuta")}</span><span class="vivo ${S.db === "ok" ? "" : "off"}"><i></i>${S.db === "ok" ? t("enVivo") : t("sinConexion")}</span></div>
   <h1>${esc(titulo)} <small>${actualizado ? `${t("actualizado")} ${haceTxt(actualizado)}` : ""}</small></h1>
   <div class="metricas">
-    <span>${t("versionDev")} <b>${esc(vid || t("sinDato"))}</b></span>
+    <span>${v && v.estado === "publicada" ? t("versionPub") : t("versionDev")} <b>${esc(vid || t("sinDato"))}</b></span>
     <span>${esc(et("fase", "Fase"))} <b>${faseCurso >= 0 ? faseCurso + 1 : fasesHechas}</b> ${t("de")} ${fases.length}</span>
     <span><b>${hechos.length}</b>/${validos.length} ${t("tareas")}</span>
     ${verif.verificaciones != null ? `<span><b>${esc(verif.verificaciones)}</b> ${esc(verif.verificacionesEtiqueta || "tests")}</span>` : ""}
@@ -563,7 +564,7 @@ function vistaSeguimiento() {
   <div class="barra-herr"><div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="${UI.tab === "fases"}" data-tab="fases">${esc(et("fasePlural", idioma() === "en" ? "Phases" : "Fases"))}</button>
     <button class="tab" role="tab" aria-selected="${UI.tab === "disciplinas"}" data-tab="disciplinas">${esc(et("disciplinaPlural", idioma() === "en" ? "Disciplines" : "Disciplinas"))}</button>
-  </div></div>
+  </div><span class="espacio"></span>${selectorVersion(v)}</div>
   <div class="herr">
     <input type="search" id="buscar" placeholder="${t("buscar")} ${esc(et("entregablePlural", idioma() === "en" ? "deliverables" : "entregables")).toLowerCase()}" value="${esc(UI.busqueda)}" aria-label="${t("buscar")}">
     <button class="chip" data-accion="desplegar" title="${t("desplegar")}">⇊</button><button class="chip" data-accion="plegar" title="${t("plegar")}">⇈</button>
@@ -601,6 +602,14 @@ function barraHtml(a, b, estado, x, ancho, extra, id, etiqueta) {
   return `<div class="bar ${estado} ${extra}" style="left:${x0}px;width:${w}px" ${id ? `data-detalle="${esc(id)}" title="${esc(etiqueta)}"` : ""}>${huecos}</div>${et2}`;
 }
 
+// Selector de versión, compartido por Seguimiento y Versiones (las dos
+// vistas miran la misma UI.version).
+function opcionesVersion(v) {
+  const estado = (x) => (x.estado === "publicada" ? (idioma() === "en" ? "released" : "publicada") : x.estado === "en_desarrollo" ? (idioma() === "en" ? "in development" : "en desarrollo") : (idioma() === "en" ? "planned" : "planificada"));
+  return [...S.versiones].sort((a, b) => (b.orden ?? 0) - (a.orden ?? 0)).map((x) => `<option value="${esc(x.id)}" ${x.id === v.id ? "selected" : ""}>${esc(x.id)}${x.estado ? ` · ${esc(estado(x))}` : ""}</option>`).join("");
+}
+const selectorVersion = (v) => `<label class="sr" for="sel-version">${esc(et("version", "Versión"))}</label><select class="select" id="sel-version">${opcionesVersion(v)}</select>`;
+
 // ── Versiones: tablero por fases
 function vistaVersiones() {
   const v = versionActual();
@@ -609,7 +618,6 @@ function vistaVersiones() {
   const { proy } = proyectar(ents);
   const cuenta = Object.fromEntries(ESTADOS.map((s) => [s, ents.filter((e) => e.estado === s).length]));
   const chips = ESTADOS.filter((s) => cuenta[s] || s !== "descartado").map((s) => `<button class="chip estado" aria-pressed="${UI.estados.has(s)}" data-estado="${s}"><span class="pt" style="${cuadEstilo(s)}"></span>${t(s)} · ${cuenta[s]}</button>`).join("");
-  const opciones = [...S.versiones].sort((a, b) => (b.orden ?? 0) - (a.orden ?? 0)).map((x) => `<option value="${esc(x.id)}" ${x.id === v.id ? "selected" : ""}>${esc(x.id)}${x.estado ? ` · ${esc(x.estado === "publicada" ? (idioma() === "en" ? "released" : "publicada") : x.estado === "en_desarrollo" ? (idioma() === "en" ? "in development" : "en desarrollo") : (idioma() === "en" ? "planned" : "planificada"))}` : ""}</option>`).join("");
   const resumenV = [v.resumen, v.pr && v.pr.url ? `<a href="${esc(v.pr.url)}" style="color:var(--hecho)">PR #${esc(v.pr.numero || "")}</a>` : "", v.publicadaEn ? `${idioma() === "en" ? "Released" : "Publicada"} ${fecha(ms(v.publicadaEn))}` : ""].filter(Boolean).join(" · ");
   const cols = fases.map((f) => {
     const est = estadoFase(f, ents, proy);
@@ -631,8 +639,7 @@ function vistaVersiones() {
   }).join("");
   return encabezado(t("tituloVer")) + `
   <div class="herr" style="margin-top:22px">
-    <label class="sr" for="sel-version" style="color:var(--tenue)">${esc(et("version", "Versión"))}</label>
-    <select class="select" id="sel-version">${opciones}</select>
+    ${selectorVersion(v)}
     <button class="chip" data-accion="cats-desplegar">⇊ ${t("desplegar")}</button><button class="chip" data-accion="cats-plegar">⇈ ${t("plegar")}</button>
     ${chips}
   </div>
@@ -845,7 +852,18 @@ document.addEventListener("keydown", (ev) => {
   if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("[role=button][data-detalle],[role=button][data-plegar]")) { ev.preventDefault(); ev.target.click(); }
 });
 document.addEventListener("input", (ev) => { if (ev.target.id === "buscar") { UI.busqueda = ev.target.value; render(); } });
-document.addEventListener("change", (ev) => { if (ev.target.id === "sel-version") { UI.version = ev.target.value; UI.catsAbiertas.clear(); render(); } });
+// Al elegir otra versión, el Gantt se encuadra en sus fechas (de su primer
+// inicio a su último fin); la versión en curso vuelve a "ahora".
+function encuadrarVersion(vid) {
+  const ents = S.entregables.filter((e) => e.version === vid);
+  const a = Math.min(...ents.map((e) => ms(e.inicio)).filter(isFinite));
+  const b = Math.max(...ents.map((e) => ms(e.fin) || ms(e.inicio)).filter(isFinite));
+  const enCurso = ents.some((e) => e.estado === "en_curso" || e.estado === "comprometido" || e.estado === "provisional");
+  if (enCurso || !isFinite(a) || !isFinite(b)) { UI.corrimiento = 0; return; }
+  UI.span = acotarSpan((b - a) * 1.15 + 36e5);
+  UI.corrimiento = (a + b) / 2 - UI.span / 2 - (Date.now() - UI.span * 0.6);
+}
+document.addEventListener("change", (ev) => { if (ev.target.id === "sel-version") { UI.version = ev.target.value; UI.catsAbiertas.clear(); encuadrarVersion(UI.version); render(); } });
 document.getElementById("detalle").addEventListener("close", () => { UI.detalle = null; });
 new ResizeObserver(() => { if (UI.vista === "seguimiento") render(); }).observe(document.getElementById("raiz"));
 setInterval(render, 30000); // "hace N min", la barra en curso y la línea de ahora; no escribe nada
