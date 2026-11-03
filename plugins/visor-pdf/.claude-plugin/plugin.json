@@ -1,0 +1,10 @@
+{
+  "name": "visor-pdf",
+  "version": "0.1.0",
+  "description": "Panel para ver PDFs dentro de la app: /verpdf <ruta>, y se abre solo cuando Claude te manda un PDF",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}

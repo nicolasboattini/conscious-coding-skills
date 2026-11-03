@@ -1,0 +1,9 @@
+{
+  "name": "agent-router",
+  "version": "0.2.0",
+  "description": "Balanceador de carga: enruta cada sub-agente al tipo de agente y al modelo mas baratos que alcancen para la tarea, e instruye al agente a delegar.",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT"
+}

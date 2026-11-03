@@ -1,0 +1,10 @@
+{
+  "name": "agent-monitor",
+  "version": "0.1.0",
+  "description": "Live pane with the subagents and background tasks of every Claude Code session on this machine",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}
