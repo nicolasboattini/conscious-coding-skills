@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills y plugins para trabajar con Claude Code de forma consciente: planificar, dejar registro y ver en vivo qué se está haciendo.",
-    "version": "0.3.1"
+    "version": "0.4.0"
   },
   "plugins": [
     {
@@ -14,6 +14,27 @@
       "source": "./plugins/live-development-roadmap",
       "description": "Tablero en vivo del desarrollo (Gantt, tarea en curso, avance, commits, tablero por fases y notas) que Claude mantiene al día mientras trabaja.",
       "version": "0.3.1",
+      "category": "productivity"
+    },
+    {
+      "name": "agent-monitor",
+      "source": "./plugins/agent-monitor",
+      "description": "Panel en vivo con los sub-agentes y las tareas en segundo plano de todas las sesiones de Claude Code de la máquina (/agentes).",
+      "version": "0.1.0",
+      "category": "productivity"
+    },
+    {
+      "name": "agent-router",
+      "source": "./plugins/agent-router",
+      "description": "Enruta cada sub-agente al tipo de agente y al modelo más baratos que alcancen para la tarea, e instruye a Claude a delegar lo mecánico.",
+      "version": "0.2.0",
+      "category": "productivity"
+    },
+    {
+      "name": "visor-pdf",
+      "source": "./plugins/visor-pdf",
+      "description": "Panel para ver PDFs dentro de la app: /verpdf <ruta>, y se abre solo cuando Claude te manda un PDF.",
+      "version": "0.1.0",
       "category": "productivity"
     }
   ]
