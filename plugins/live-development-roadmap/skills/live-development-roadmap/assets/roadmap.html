@@ -47,6 +47,8 @@ main { overflow: auto; padding: 22px 28px 40px; min-width: 0; }
 .vivo i { width: 7px; height: 7px; border-radius: 50%; background: var(--acento); animation: latido 1.6s infinite; }
 .vivo.off { border-color: var(--tenue); color: var(--tenue); }
 .vivo.off i { background: var(--tenue); animation: none; }
+.vivo.quieto { border-color: color-mix(in srgb, var(--acento) 45%, var(--linea)); color: var(--tenue); }
+.vivo.quieto i { animation: none; opacity: .6; }
 @keyframes latido { 50% { opacity: .25; } }
 h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 4.4vw, 52px); letter-spacing: .04em; text-transform: uppercase; margin: 6px 0 2px; text-wrap: balance; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
 h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--tenue); font-weight: 400; }
@@ -133,6 +135,8 @@ h1 small { font-family: var(--cuerpo); font-size: 14px; letter-spacing: 0; text-
 .g-pausa > i:not(.limite_uso) { background: color-mix(in srgb, var(--tenue) 7%, transparent); }
 .g-pausa-et { position: absolute; top: 5px; height: 18px; line-height: 18px; padding: 0 4px; text-align: center; overflow: hidden; text-overflow: ellipsis; font-family: var(--display); font-weight: 600; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--tenue); white-space: nowrap; border-bottom: 1px dashed color-mix(in srgb, var(--tenue) 45%, transparent); z-index: 2; }
 .g-pausa-et::before { content: ""; display: inline-block; vertical-align: -1px; margin-right: 5px; width: 9px; height: 9px; background: repeating-linear-gradient(135deg, var(--tenue) 0 1px, transparent 1px 3px); }
+.g-sesion { position: absolute; top: 48px; bottom: 0; z-index: 0; background: color-mix(in srgb, var(--acento) 5%, transparent); border-top: 4px solid color-mix(in srgb, var(--acento) 55%, transparent); }
+.g-sesion.estimada { background: transparent; border-top-style: dashed; border-top-color: color-mix(in srgb, var(--acento) 35%, transparent); }
 .bar-hueco { position: absolute; top: -1px; bottom: -1px; background: color-mix(in srgb, var(--panel) 78%, transparent); }
 .pausa-activa { margin-top: 8px; padding: 6px 8px; border: 1px dashed color-mix(in srgb, var(--tenue) 60%, transparent); font-size: 12.5px; color: var(--texto); }
 .leyenda { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--tenue); margin-top: 10px; }
@@ -240,7 +244,7 @@ dialog::backdrop { background: rgba(3, 5, 8, .72); }
 // la base (flag simple/tech del proyecto); acá solo va la interfaz.
 const TXT = {
   es: {
-    seguimiento: "Seguimiento", versiones: "Versiones", notas: "Notas", hojaDeRuta: "Hoja de ruta", enVivo: "En vivo", sinConexion: "Sin conexión",
+    seguimiento: "Seguimiento", versiones: "Versiones", notas: "Notas", hojaDeRuta: "Hoja de ruta", enVivo: "En vivo · trabajando", sinActividad: "Sin actividad", sinConexion: "Sin conexión",
     tituloSeg: "Seguimiento del progreso", tituloVer: "Vista de versiones", tituloNotas: "Notas y decisiones", actualizado: "Actualizado", hace: "hace",
     versionDev: "Versión en desarrollo", versionPub: "Versión publicada", de: "de", tareas: "tareas", decisiones: "decisiones", lineas: "líneas", ultimoCommit: "último commit",
     ahoraMismo: "Ahora mismo · en curso", empezo: "Empezó a las", lleva: "lleva", previsto: "previsto", nadaEnCurso: "Nada en curso.", siguiente: "Sigue",
@@ -252,6 +256,8 @@ const TXT = {
     lineasPorDisc: "líneas cambiadas", commits: "Commits", capturas: "Capturas", sinDato: "—", cerrar: "Cerrar", todas: "Todas",
     decision: "Decisión", pendiente: "Pendiente", riesgo: "Riesgo", resumen: "Resumen", motivo: "Motivo",
     zoomAyuda: "Arrastrá para moverte; rueda del mouse o pellizco para acercar o alejar", pausa: "Pausa", enPausa: "En pausa", sinPausas: "sin pausas", limite_uso: "Límite de uso", espera_usuario: "Esperando al usuario", fuera_de_horario: "Fuera de horario", otro: "Pausa",
+    horas: "Horas", acumulado: "Acumulado", medidas: "medidas", estimadas: "estimadas", sesion: "Sesión de trabajo", sesionAbierta: "Sesión abierta desde",
+    horasAyuda: "Medidas: sesiones de trabajo registradas en vivo, menos pausas. Estimadas: sesiones cargadas a mano y, sin sesiones, el tiempo que cubren los entregables (contado una vez). El acumulado va de la primera versión a la elegida.",
     comoLeer: "Cómo leer este tablero", sinDb: "Este tablero lee sus datos de la base del artifact. Abrilo en claude.ai con tu sesión iniciada para verlos.",
     sinDatos: "Todavía no hay datos. Claude carga la versión, sus fases y entregables cuando se aprueba un plan.",
     guia: [
@@ -259,13 +265,17 @@ const TXT = {
       "Comprometido: aprobado en el plan; su barra gris es la hora estimada según los minutos previstos.",
       "Provisional: agregado sin aprobar o de fases siguientes; puede moverse.",
       "Bloqueado: espera algo externo (una respuesta, un permiso, un deploy). Descartado: salió del plan y queda registrado.",
-      "Las franjas rayadas del Gantt son pausas del trabajo (límite de uso, esperando al usuario, fuera de horario). Su tiempo no cuenta en la duración de las tareas ni en el ritmo.",
+      "Las franjas rayadas del Gantt son pausas del trabajo (límite de uso, esperando al usuario, fuera de horario). Su tiempo no cuenta en la duración de las tareas, en las horas ni en el ritmo.",
+      "La franja de color arriba del Gantt marca las sesiones de trabajo: cuándo se trabajó de verdad en el proyecto. Las noches, los fines de semana y las esperas entre sesiones quedan afuera.",
+      "Horas de la versión: la suma de sus sesiones, menos las pausas que caen adentro; si dos sesiones se superponen, ese tramo cuenta una vez. Medidas son las sesiones registradas en vivo; estimadas, las cargadas a mano y, para lo trabajado antes de la primera sesión, el tiempo que cubren los entregables, contado una sola vez aunque varios compartan tramo.",
+      "El acumulado suma desde la primera versión hasta la elegida en el selector: cambiá la versión para ver las horas hasta esa.",
+      "El indicador de arriba late solo mientras se está trabajando (hay una sesión abierta y no está en pausa). Quieto: el tablero está conectado pero no hay actividad.",
       "En el Gantt: arrastrá para moverte en el tiempo; con la rueda del mouse (o pellizcando en el celular) acercás o alejás, de a una hora hasta un día.",
-      "La fecha estimada de cierre se recalcula con el ritmo real: el promedio de minutos de lo ya hecho."
+      "La fecha estimada de cierre se recalcula con el ritmo real: el tiempo de lo ya hecho dividido por la cantidad de tareas, sin contar dos veces las que comparten tramo."
     ],
   },
   en: {
-    seguimiento: "Tracking", versiones: "Versions", notas: "Notes", hojaDeRuta: "Roadmap", enVivo: "Live", sinConexion: "Offline",
+    seguimiento: "Tracking", versiones: "Versions", notas: "Notes", hojaDeRuta: "Roadmap", enVivo: "Live · working", sinActividad: "Idle", sinConexion: "Offline",
     tituloSeg: "Progress tracker", tituloVer: "Version view", tituloNotas: "Notes and decisions", actualizado: "Updated", hace: "",
     versionDev: "Version in development", versionPub: "Released version", de: "of", tareas: "tasks", decisiones: "decisions", lineas: "lines", ultimoCommit: "last commit",
     ahoraMismo: "Right now · in progress", empezo: "Started at", lleva: "elapsed", previsto: "planned", nadaEnCurso: "Nothing in progress.", siguiente: "Next",
@@ -277,6 +287,8 @@ const TXT = {
     lineasPorDisc: "lines changed", commits: "Commits", capturas: "Screenshots", sinDato: "—", cerrar: "Close", todas: "All",
     decision: "Decision", pendiente: "Pending", riesgo: "Risk", resumen: "Summary", motivo: "Reason",
     zoomAyuda: "Drag to move; mouse wheel or pinch to zoom", pausa: "Pause", enPausa: "Paused", sinPausas: "excluding pauses", limite_uso: "Usage limit", espera_usuario: "Waiting on user", fuera_de_horario: "Off hours", otro: "Pause",
+    horas: "Hours", acumulado: "Cumulative", medidas: "measured", estimadas: "estimated", sesion: "Work session", sesionAbierta: "Session open since",
+    horasAyuda: "Measured: work sessions recorded live, minus pauses. Estimated: sessions entered by hand and, without sessions, the time the deliverables cover (counted once). The cumulative total runs from the first version to the selected one.",
     comoLeer: "How to read this board", sinDb: "This board reads its data from the artifact's database. Open it on claude.ai while signed in to see it.",
     sinDatos: "No data yet. Claude loads the version, its phases and deliverables once a plan is approved.",
     guia: [
@@ -284,9 +296,13 @@ const TXT = {
       "Committed: approved in the plan; its grey bar is the estimated time from the planned minutes.",
       "Tentative: added without approval or in later phases; it may move.",
       "Blocked: waiting on something external (an answer, a permission, a deploy). Dropped: removed from the plan, kept on record.",
-      "Hatched bands on the Gantt are work pauses (usage limit, waiting on the user, off hours). Their time is left out of task durations and the pace.",
+      "Hatched bands on the Gantt are work pauses (usage limit, waiting on the user, off hours). Their time is left out of task durations, hours and the pace.",
+      "The colored strip at the top of the Gantt marks work sessions: when the project was actually worked on. Nights, weekends and waits between sessions are left out.",
+      "Version hours: the sum of its sessions, minus the pauses inside them; where two sessions overlap, that stretch counts once. Measured hours are sessions recorded live; estimated ones are sessions entered by hand and, for work before the first session, the time the deliverables cover, counted once even when several share a stretch.",
+      "The cumulative total runs from the first version to the one picked in the selector: change the version to see the hours up to it.",
+      "The badge at the top pulses only while work is happening (a session is open and not paused). Still: the board is connected but idle.",
       "On the Gantt: drag to move through time; the mouse wheel (or a pinch on a phone) zooms in or out, one hour at a time up to a day.",
-      "The estimated finish date follows the actual pace: the average minutes of what is already done."
+      "The estimated finish date follows the actual pace: the time spent on what is done divided by the number of tasks, without counting twice the ones that share a stretch."
     ],
   },
 };
@@ -295,7 +311,7 @@ const COLOR_ESTADO = { hecho: "var(--hecho)", en_curso: "var(--acento)", comprom
 const ZOOMS = [["6h", 6 * 36e5], ["1d", 24 * 36e5], ["3d", 72 * 36e5], ["1s", 7 * 864e5], ["1m", 30 * 864e5], ["3m", 91 * 864e5]];
 const ZOOM_ET = { es: { "6h": "6 h", "1d": "1 día", "3d": "3 días", "1s": "1 semana", "1m": "1 mes", "3m": "3 meses" }, en: { "6h": "6 h", "1d": "1 day", "3d": "3 days", "1s": "1 week", "1m": "1 month", "3m": "3 months" } };
 
-const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], pausas: [], db: "cargando" };
+const S = { meta: null, versiones: [], fases: [], entregables: [], cambios: [], notas: [], pausas: [], sesiones: [], db: "cargando" };
 const UI = { vista: "seguimiento", tab: "fases", span: 24 * 36e5, corrimiento: 0, plegadas: new Set(), desplegadasTodas: null, busqueda: "", version: null, estados: new Set(ESTADOS), catsAbiertas: new Set(), tipoNota: "todas", detalle: null, captura: 0 };
 // Zoom del Gantt: un período continuo (UI.span, en ms) entre 1 hora y 3
 // meses. Los botones fijan uno de los preestablecidos; la rueda y el pellizco
@@ -367,10 +383,76 @@ function minutosEfectivos(a, b) {
   for (const p of tramosPausa()) total -= Math.max(0, Math.min(b, p.b) - Math.max(a, p.a));
   return Math.max(0, total) / 6e4;
 }
+// Unión de intervalos [a, b] (ms): junta los que se tocan o se superponen,
+// así cada minuto cuenta una vez.
+function unir(tramos) {
+  const r = [];
+  for (const [a, b] of tramos.filter((p) => isFinite(p[0]) && isFinite(p[1]) && p[1] > p[0]).sort((x, y) => x[0] - y[0])) {
+    const u = r[r.length - 1];
+    if (u && a <= u[1]) u[1] = Math.max(u[1], b); else r.push([a, b]);
+  }
+  return r;
+}
+// Milisegundos de trabajo de un conjunto de tramos: su unión menos las pausas.
+function neto(tramos) {
+  const pausas = unir(tramosPausa().map((p) => [p.a, p.b]));
+  let total = 0;
+  for (const [a, b] of unir(tramos)) {
+    total += b - a;
+    for (const [pa, pb] of pausas) total -= Math.max(0, Math.min(b, pb) - Math.max(a, pa));
+  }
+  return Math.max(0, total);
+}
+// Ritmo: el tiempo de lo hecho (unión, sin pausas) dividido por la cantidad
+// de tareas hechas. Las que comparten tramo (un mismo commit) no lo cuentan
+// dos veces.
 function ritmoMin(ents) {
   const hechos = ents.filter((e) => e.estado === "hecho" && isFinite(ms(e.inicio)) && isFinite(ms(e.fin)));
   if (!hechos.length) return NaN;
-  return hechos.reduce((s, e) => s + minutosEfectivos(ms(e.inicio), ms(e.fin)), 0) / hechos.length;
+  return neto(hechos.map((e) => [ms(e.inicio), ms(e.fin)])) / 6e4 / hechos.length;
+}
+// Sesiones de trabajo: de acá salen las horas. Una sin fin sigue abierta.
+function tramosSesion() {
+  return S.sesiones.map((s) => ({ ...s, a: ms(s.inicio), b: isFinite(ms(s.fin)) ? ms(s.fin) : Date.now() })).filter((s) => isFinite(s.a) && s.b > s.a);
+}
+const sesionAbierta = () => S.sesiones.find((s) => isFinite(ms(s.inicio)) && !s.fin);
+// ¿Se está trabajando ahora? Hay una sesión abierta, sin pausa abierta, y
+// no es una huérfana vieja (más de 6 h). Un tablero sin sesiones todavía
+// usa la última escritura: actividad en los últimos 15 minutos.
+function trabajandoAhora() {
+  if (pausaActiva()) return false;
+  const sa = sesionAbierta();
+  if (sa) return Date.now() - ms(sa.inicio) < 6 * 36e5;
+  if (S.sesiones.length) return false;
+  const ultima = Math.max(ms(S.meta && S.meta.actualizadoEn) || 0, ...S.cambios.slice(0, 1).map((c) => ms(c.en) || 0));
+  return Date.now() - ultima < 15 * 6e4;
+}
+// Horas de una versión, en ms. Medido: sus sesiones "medido". Estimado: sus
+// sesiones "estimado" más, como respaldo, lo anterior a su primera sesión
+// (toda la versión si no tiene) tomado de la unión de sus entregables.
+function horasVersion(vid) {
+  const ses = tramosSesion().filter((s) => s.version === vid);
+  const medido = neto(ses.filter((s) => s.origen !== "estimado").map((s) => [s.a, s.b]));
+  const corte = ses.length ? Math.min(...ses.map((s) => s.a)) : Infinity;
+  const respaldo = S.entregables.filter((e) => e.version === vid && e.estado !== "descartado" && isFinite(ms(e.inicio)))
+    .map((e) => [ms(e.inicio), Math.min(corte, isFinite(ms(e.fin)) ? ms(e.fin) : e.estado === "en_curso" ? Date.now() : ms(e.inicio))]);
+  const estimado = neto(ses.filter((s) => s.origen === "estimado").map((s) => [s.a, s.b])) + neto(respaldo);
+  return { medido, estimado };
+}
+// Acumulado: de la primera versión (menor orden) hasta v, inclusive.
+function horasHasta(v) {
+  const tope = v.orden ?? Infinity;
+  const vers = S.versiones.filter((x) => (x.orden ?? 0) <= tope).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
+  if (!vers.some((x) => x.id === v.id)) vers.push(v);
+  const h = vers.reduce((s, x) => { const y = horasVersion(x.id); return { medido: s.medido + y.medido, estimado: s.estimado + y.estimado }; }, { medido: 0, estimado: 0 });
+  return { ...h, primera: vers[0].id, versiones: vers.length };
+}
+function horasHtml(h) {
+  const f = (x) => { const n = x / 36e5; return n > 0 && n < 10 ? `${n.toFixed(1).replace(/\.0$/, "").replace(".", idioma() === "en" ? "." : ",")} h` : `${Math.round(n).toLocaleString(loc())} h`; };
+  const hayM = h.medido >= 6e4, hayE = h.estimado >= 6e4;
+  if (hayM && hayE) return `<b>${f(h.medido + h.estimado)}</b> (${f(h.medido)} ${t("medidas")} + ${f(h.estimado)} ${t("estimadas")})`;
+  if (hayE) return `<b>${f(h.estimado)}</b> ${t("estimadas")}`;
+  return `<b>${f(h.medido)}</b>${hayM ? ` ${t("medidas")}` : ""}`;
 }
 // Proyección: lo pendiente va uno detrás de otro desde "ahora" (o desde el
 // fin previsto de lo que está en curso), con sus minutos previstos o, si no
@@ -428,6 +510,7 @@ function encabezado(titulo) {
   const pct = validos.length ? Math.round((hechos.length / validos.length) * 100) : 0;
   const desde = v && v.desde ? ms(v.desde) : Math.min(...ents.map((e) => ms(e.inicio)).filter(isFinite));
   const nombreProyecto = (S.meta && S.meta.nombre) || "";
+  const acum = v ? horasHasta(v) : null;
 
   let panelCurso;
   if (enCurso) {
@@ -442,16 +525,20 @@ function encabezado(titulo) {
   } else {
     panelCurso = `<p class="vacio">${t("nadaEnCurso")}</p>${siguiente ? `<div class="sub">${t("siguiente")}: <button class="dep" data-detalle="${esc(siguiente.id)}">${esc(siguiente.id)}</button> ${esc(siguiente.titulo)}</div>` : ""}`;
   }
+  const sa = sesionAbierta();
+  if (sa) panelCurso += `<div class="fila-dato" style="margin-top:6px"><span>${t("sesionAbierta")} ${hora(ms(sa.inicio))}</span><span>${dur(neto([[ms(sa.inicio), Date.now()]]) / 6e4)}</span></div>`;
   const pa = pausaActiva();
   if (pa) panelCurso += `<div class="pausa-activa">${t("enPausa")} · ${esc(t(pa.motivo) || t("pausa"))} · ${t("desde")} ${hora(ms(pa.inicio))}${pa.detalle ? ` · ${esc(pa.detalle)}` : ""}</div>`;
   const items = S.cambios.slice(0, 7).map((c) => `<li><time>${hora(ms(c.en))}</time>${iconoCambio(c.tipo)}<span class="msg" title="${esc(c.mensaje)}">${esc(c.mensaje)}</span>${c.tipo === "commit" || c.mas || c.menos ? `<span class="diff"><span class="mas">+${c.mas || 0}</span> <span class="menos">−${c.menos || 0}</span></span>` : "<span></span>"}</li>`).join("");
 
-  return `<div class="eyebrow"><span>${esc(nombreProyecto)} · ${t("hojaDeRuta")}</span><span class="vivo ${S.db === "ok" ? "" : "off"}"><i></i>${S.db === "ok" ? t("enVivo") : t("sinConexion")}</span></div>
+  return `<div class="eyebrow"><span>${esc(nombreProyecto)} · ${t("hojaDeRuta")}</span><span class="vivo ${S.db !== "ok" ? "off" : trabajandoAhora() ? "" : "quieto"}"><i></i>${S.db !== "ok" ? t("sinConexion") : trabajandoAhora() ? t("enVivo") : t("sinActividad")}</span></div>
   <h1>${esc(titulo)} <small>${actualizado ? `${t("actualizado")} ${haceTxt(actualizado)}` : ""}</small></h1>
   <div class="metricas">
     <span>${v && v.estado === "publicada" ? t("versionPub") : t("versionDev")} <b>${esc(vid || t("sinDato"))}</b></span>
     <span>${esc(et("fase", "Fase"))} <b>${faseCurso >= 0 ? faseCurso + 1 : fasesHechas}</b> ${t("de")} ${fases.length}</span>
     <span><b>${hechos.length}</b>/${validos.length} ${t("tareas")}</span>
+    ${v ? `<span title="${esc(t("horasAyuda"))}">${t("horas")} ${esc(vid)} ${horasHtml(horasVersion(vid))}</span>` : ""}
+    ${acum && acum.versiones > 1 ? `<span title="${esc(t("horasAyuda"))}">${t("acumulado")} ${esc(acum.primera)} → ${esc(vid)} ${horasHtml(acum)}</span>` : ""}
     ${verif.verificaciones != null ? `<span><b>${esc(verif.verificaciones)}</b> ${esc(verif.verificacionesEtiqueta || "tests")}</span>` : ""}
     <span><b>${decisiones}</b> ${t("decisiones")}</span>
     <span><b>${lineas.toLocaleString(loc())}</b> ${t("lineas")}</span>
@@ -557,6 +644,13 @@ function vistaSeguimiento() {
     }).join("");
     return `<div class="g-pausa" style="left:${gx0}px;width:${Math.max(2, gx1 - gx0)}px">${tramos}</div>`;
   }).join("");
+  // Sesiones de trabajo: franja de fondo, con el borde de arriba en la fila
+  // de las horas (ahí se puede pasar el mouse para ver el detalle).
+  const sesiones = tramosSesion().filter((s) => s.b >= t0 && s.a <= t1).map((s) => {
+    const x0 = Math.max(0, x(s.a)), x1 = Math.min(ancho, x(s.b));
+    const titulo = `${t("sesion")}${s.origen === "estimado" ? ` (${t("estimado")})` : ""}${s.version ? ` · ${s.version}` : ""} · ${fechaHora(s.a)} → ${s.fin ? hora(s.b) : t("ahora").toLowerCase()} · ${dur(neto([[s.a, s.b]]) / 6e4)}${s.nota ? ` · ${s.nota}` : ""}`;
+    return `<div class="g-sesion${s.origen === "estimado" ? " estimada" : ""}" style="left:${x0}px;width:${Math.max(2, x1 - x0)}px" title="${esc(titulo)}"></div>`;
+  }).join("");
   const lineaAhora = ahora >= t0 && ahora <= t1 ? `<div class="g-ahora" style="left:${x(ahora)}px"><b>${t("ahora").toUpperCase()}</b></div>` : "";
 
   const zooms = ZOOMS.map(([z, v]) => `<button class="chip" aria-pressed="${UI.span === v}" data-zoom="${z}">${ZOOM_ET[idioma()][z]}</button>`).join("");
@@ -572,7 +666,7 @@ function vistaSeguimiento() {
     <button class="chip" data-accion="atras" aria-label="‹">‹</button><button class="chip" data-accion="ahora">${t("ahora")}</button><button class="chip" data-accion="adelante" aria-label="›">›</button>
   </div>
   <div class="gantt"><div class="g-izq">${izq}</div>
-    <div class="g-der${UI.arrastre && UI.arrastre.movio ? " arrastrando" : ""}" title="${t("zoomAyuda")}" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${pausas}${etPausas}${lineaAhora}<div class="g-filas">${der}</div></div>
+    <div class="g-der${UI.arrastre && UI.arrastre.movio ? " arrastrando" : ""}" title="${t("zoomAyuda")}" style="height:${52 + 31 * (izq.match(/class="g-fila/g) || []).length}px">${grilla}<div class="g-dias">${dias}</div><div class="g-horas">${marcas}</div>${sesiones}${pausas}${etPausas}${lineaAhora}<div class="g-filas">${der}</div></div>
   </div>
   <div class="leyenda">
     <span><i style="background:var(--hecho)"></i>${t("hecho")}</span>
@@ -581,6 +675,7 @@ function vistaSeguimiento() {
     <span><i style="border:1px dashed var(--provisional)"></i>${t("provisional")} (${t("estimado")})</span>
     <span><i style="border:1px solid var(--bloqueado)"></i>${t("bloqueado")}</span>
     <span><i style="background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--tenue) 35%, transparent) 0 2px, transparent 2px 6px);border:1px dashed color-mix(in srgb, var(--tenue) 50%, transparent)"></i>${t("pausa")}</span>
+    <span><i style="background:color-mix(in srgb, var(--acento) 12%, transparent);border-top:3px solid color-mix(in srgb, var(--acento) 55%, transparent)"></i>${t("sesion")}</span>
     <span><i style="border-left:1px dashed var(--acento);width:1px"></i>${t("ahora")}</span>
   </div>`;
 }
@@ -883,6 +978,7 @@ irA(location.hash.slice(1));
   lista("cambios", db.collection("cambios").orderBy("en", "desc").limit(300), "cambios");
   lista("notas", db.collection("notas").orderBy("en", "desc").limit(500), "notas");
   lista("pausas", db.collection("pausas").orderBy("inicio", "desc").limit(500), "pausas");
+  lista("sesiones", db.collection("sesiones").orderBy("inicio", "desc").limit(3000), "sesiones");
   render();
 })();
 </script>

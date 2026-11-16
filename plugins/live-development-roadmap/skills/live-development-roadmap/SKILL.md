@@ -32,7 +32,7 @@ Hace falta poder publicar artifacts y escribir en su base: el servidor MCP `clau
 3. **Declarar capacidades:** `{"db": {"rules": [{"path": "", "read": "view", "write": "admin"}]}, "assets": {}}`. Así solo el dueño y los editores escriben; quien lo vea por link solo lee.
 4. **Escribir `meta/proyecto`** con nombre, sigla, acento, idioma, redacción, disciplinas (`id` y `nombre`), etiquetas si hay, `versionActual` y `actualizadoEn`.
 5. **Guardar la configuración local:** `python scripts/ldr.py init --nombre "…" --slug <slug> --url <link> --acento "#…" --idioma es --redaccion simple --disciplina "pantallas:Pantallas:src/app/**,src/components/**" …`
-6. **Historia (opcional, recomendado).** Para versiones ya publicadas, `python scripts/ldr.py commits --desde <tag-o-commit>` da cada commit con sus líneas por disciplina. Armá versión, fases y entregables a partir de los commits y PRs: un entregable por commit o grupo de commits que cierran una cosa. Como tiempos usá el commit anterior como inicio aproximado, y aclaralo en `verificacion` ("tiempos aproximados, cargado desde git"). Sin capturas.
+6. **Historia (opcional, recomendado).** Para versiones ya publicadas, `python scripts/ldr.py commits --desde <tag-o-commit>` da cada commit con sus líneas por disciplina. Armá versión, fases y entregables a partir de los commits y PRs: un entregable por commit o grupo de commits que cierran una cosa. Como tiempos usá el commit anterior como inicio aproximado, y aclaralo en `verificacion` ("tiempos aproximados, cargado desde git"). Sin capturas ni sesiones: las horas de esas versiones salen de sus entregables y el tablero las muestra como estimadas.
 7. `python scripts/ldr.py sincronizado` y pasale el link al usuario.
 
 ## Cargar un plan
@@ -72,10 +72,27 @@ Cuando el trabajo se corta, el Gantt lo muestra como una franja rayada y ese tie
 
 Sin el plugin (solo la skill), mirá vos las horas: si entre tu último mensaje y el siguiente pedido pasó más de media hora con algo en curso, registrala igual.
 
+Una pausa que cae adentro de una sesión se descuenta de esa sesión: no recortes la sesión, registrá la pausa.
+
+## Sesiones de trabajo (obligatorio)
+
+Las horas del tablero salen de `sesiones`: los tramos en los que de verdad se trabajó. Entre tareas quedan noches, fines de semana y esperas, y varias tareas comparten tramo cuando salen en un mismo commit, así que ni las fechas de los entregables ni su suma dicen cuánto llevó una versión. **Cada turno de trabajo en un repo con roadmap sigue este ciclo, sin que el usuario lo pida.** Un turno de trabajo es uno que cambia el proyecto o el tablero; una consulta sin cambios no abre sesión.
+
+1. **Cerrar huérfanas.** Antes que nada, buscá en `sesiones` las que no tienen `fin`. Una abierta de antes (otra conversación, o un turno que no llegó a cerrarla) se cierra con la hora de su **última actividad registrada**, nunca con la hora actual: el `en` más reciente de `cambios` y `notas`, o el `inicio` o `fin` más reciente de `entregables`, posterior al `inicio` de la sesión.
+   - Si el hook pasó la hora de un corte (límite de uso u otro error), esa hora es el `fin`.
+   - Sin actividad posterior, `fin` = `inicio`, con `nota: "huérfana sin actividad"`.
+2. **Abrir.** Antes de tocar código o el tablero: `sesiones/s-<fecha compacta>` con `inicio` (ahora), `version` (`meta/proyecto.versionActual`, o la que se abre en este turno) y `origen: "medido"`. Si en el turno cambia la versión en desarrollo, cerrá la sesión y abrí otra.
+3. **Cerrar.** Antes de terminar el turno, `fin` con la hora, después de la nota `resumen`. También cuando el turno queda esperando una respuesta o una prueba del usuario, aunque la tarea siga abierta: al volver se abre otra sesión, y la espera queda afuera sola. Si el turno se corta por el límite de uso no se puede escribir: la cierra el paso 1 del turno siguiente.
+
+- **`origen: "estimado"`** solo para tramos pasados que no se midieron y que el usuario informa ("ayer trabajé de 9 a 12"), con `nota` de dónde sale. Nunca inventes sesiones.
+- El tiempo del usuario dirigiendo (leer, responder, probar mientras el turno corre) ya queda dentro de la sesión. Las esperas entre turnos no cuentan.
+- El cálculo de las horas está en `references/modelo-de-datos.md`, sección "Horas".
+
 ## Mientras se trabaja
 
 | Momento | Qué escribir |
 |---|---|
+| Empieza un turno de trabajo | Cerrá las sesiones huérfanas y abrí la del turno (ver "Sesiones de trabajo") |
 | Empezás un entregable | `estado: "en_curso"`, `inicio`. Solo uno en curso a la vez, salvo trabajo en paralelo real |
 | Hacés un commit | `python scripts/ldr.py commit` → un documento en `cambios` (tipo `commit`) y, en el entregable, el commit en `commits` y la suma en `lineas` |
 | Corrés tests o verificás en vivo | `verificacion` con qué se probó y el resultado; `meta/proyecto.metricas.verificaciones` con la cantidad de tests |
@@ -88,12 +105,13 @@ Sin el plugin (solo la skill), mirá vos las horas: si entre tu último mensaje 
 | Reestimás o cambia el alcance | Ajustá `previstoMin` o los entregables, y un cambio de tipo `plan`. Si cambia lo aprobado, preguntá antes |
 | PR, merge, deploy | Un cambio del tipo correspondiente. Con el PR, `versiones/<id>.pr`; con el deploy, `estado: "publicada"` y `publicadaEn` |
 | Terminás la tarea que te pidieron | Una nota `resumen`: qué se hizo, qué quedó y qué sigue. No esperes a que el usuario diga "cerramos" |
+| Termina el turno o queda esperando al usuario | `fin` de la sesión abierta |
 
 Después de cada actualización: `meta/proyecto.actualizadoEn` y `python scripts/ldr.py sincronizado`.
 
 El tablero se actualiza **mientras** se trabaja, no al final: el entregable se abre antes de tocar código, y cada commit se registra apenas se hace. Con el plugin instalado, los hooks lo recuerdan:
 
-- al empezar cada pedido;
+- al empezar cada pedido, junto con el ciclo de sesiones;
 - después de cada `git commit`;
 - al cerrar el turno, si quedaron commits o cambios sin registrar. En ese caso te frenan una vez: registralos, aunque no haya plan.
 
@@ -116,7 +134,7 @@ En los dos casos, frases cortas y concretas, con números cuando los hay. Los me
 
 ## Reglas
 
-- El tablero refleja lo que pasó: nunca marques hecho algo sin verificar, ni inventes tiempos (los aproximados se aclaran).
+- El tablero refleja lo que pasó: nunca marques hecho algo sin verificar, ni inventes tiempos (los aproximados se aclaran). Las horas medidas salen solo de sesiones `medido`.
 - No guardes secretos, tokens, contraseñas ni datos personales reales: el tablero se puede compartir.
 - No reescribas la página para cambiar datos; solo la base. La página se republica únicamente para mejorarla.
 - Un roadmap por proyecto. Si el usuario trabaja en otro repo con roadmap, usá el de ese repo.

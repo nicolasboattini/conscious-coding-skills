@@ -17,7 +17,8 @@ Un tablero en vivo por proyecto, inspirado en el [Progress Tracker de Star Citiz
   - commits.
 - **Versiones:** tablero por fases, con categorías y tarjetas, y filtros por estado.
 - **Notas:** decisiones, pendientes, riesgos y resúmenes, más una guía de cómo leer el tablero.
-- **Pausas:** los cortes por límite de uso o esperas largas se ven en el Gantt como franjas rayadas y no cuentan en la duración de las tareas ni en el ritmo.
+- **Pausas:** los cortes por límite de uso o esperas largas se ven en el Gantt como franjas rayadas y no cuentan en la duración de las tareas, en las horas ni en el ritmo.
+- **Horas reales:** Claude registra cada sesión de trabajo (abre al empezar el turno, cierra al terminar o al quedar esperando, y cierra las que quedaron huérfanas). El encabezado muestra las horas de la versión elegida y las acumuladas desde la primera, separando medidas y estimadas (ej. `62 h medidas + 90 h estimadas`). En el Gantt, las sesiones son una franja de fondo.
 
 Estados: Hecho, En curso, Comprometido (aprobado en el plan), Provisional (puede moverse), Bloqueado y Descartado.
 
@@ -44,7 +45,7 @@ La configuración de cada proyecto (link del tablero, disciplinas, color, idioma
 
 ## Hooks (solo instalando como plugin)
 
-- `UserPromptSubmit`: al empezar cada pedido recuerda que todo cambio va al tablero, con o sin plan, y pasa las pausas pendientes de registrar.
+- `UserPromptSubmit`: al empezar cada pedido recuerda que todo cambio va al tablero, con o sin plan, y el ciclo de sesiones (cerrar huérfanas, abrir, cerrar), y pasa las pausas pendientes de registrar.
 - `PostToolUse` en Edit/Write: anota los archivos tocados en la sesión.
 - `PostToolUse` en Bash/PowerShell: después de un `git commit`, pide registrarlo en el momento.
 - `Stop`: si quedaron commits, archivos editados o cambios sin commitear (incluso los hechos por consola) sin registrar, frena el cierre del turno una vez y pide actualizar el tablero. Anota la hora del cierre.

@@ -36,7 +36,9 @@ AVISO_PROTOCOLO = (
     "Todo cambio de código se registra en el tablero, haya plan o no: un arreglo, un ajuste o una función suelta "
     "lleva su entregable (en curso al empezar, hecho al verificar) en la fase de trabajo suelto de la versión actual. "
     "Cada commit se registra apenas se hace (`ldr.py commit`). Ver la skill live-development-roadmap, sección "
-    "\"Trabajo suelto\"."
+    "\"Trabajo suelto\". Si este turno cambia el proyecto o el tablero, seguí el ciclo de sesiones: cerrá las "
+    "sesiones huérfanas (sin `fin`) con la hora de su última actividad registrada, abrí la de este turno en "
+    "`sesiones` (origen medido) y cerrala antes de terminar o de quedar esperando al usuario."
 )
 
 
@@ -65,7 +67,8 @@ def aviso_pausa(cfg: dict, repo: Path | None, ahora: float, segundos_ausente: fl
             f"live-development-roadmap: el trabajo se cortó a las {inicio} ({motivo}{': ' + detalle if detalle else ''}) y vuelve ahora. "
             f"Registrá la pausa en el tablero: `pausas/<id>` con inicio {inicio}, fin {hora_local(ahora)}, motivo \"{motivo}\", "
             "detalle, version y entregable en curso si lo había. Si el límite se liberó antes de que volviera el usuario, "
-            "partila en dos: limite_uso hasta la hora de liberación y espera_usuario hasta ahora."
+            "partila en dos: limite_uso hasta la hora de liberación y espera_usuario hasta ahora. "
+            f"Si quedó una sesión abierta, cerrala con fin {inicio} (la hora del corte)."
         )
     ultimo = cfg.get("ultimoCierre")
     try:
@@ -194,7 +197,8 @@ def cierre(proyecto: str, datos: dict) -> None:
         partes.append(f"Archivos cambiados desde la última actualización: {', '.join(archivos[:8])}{' …' if len(archivos) > 8 else ''}.")
     partes.append(
         "Registrá el trabajo antes de terminar: el entregable (estado, horas, commits con `ldr.py commit`, verificación), "
-        "aunque no haya plan (va a la fase de trabajo suelto de la versión actual), y corré `ldr.py sincronizado`. "
+        "aunque no haya plan (va a la fase de trabajo suelto de la versión actual), cerrá la sesión del turno "
+        "(`fin` en `sesiones`) y corré `ldr.py sincronizado`. "
         "Solo si el usuario pidió no registrarlo, o si los cambios no son de esta sesión, decilo en una línea y terminá."
     )
     print(json.dumps({"decision": "block", "reason": " ".join(partes)}, ensure_ascii=False))
