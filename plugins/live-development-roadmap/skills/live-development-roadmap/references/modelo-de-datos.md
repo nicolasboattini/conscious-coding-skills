@@ -108,6 +108,29 @@ Tramos sin trabajo: el Gantt los dibuja como franjas rayadas y su tiempo no cuen
 | `version` | texto | |
 | `entregable` | texto, opcional | el que estaba en curso |
 
+## `sesiones/<id>`
+
+Tramos en los que se trabajó en el proyecto: uno por turno de trabajo (ver SKILL.md, "Sesiones de trabajo"). De acá salen las horas. El Gantt los dibuja como franja de fondo. Id: `s-<fecha compacta>` (ej. `s-20261116-0930`).
+
+| Campo | Tipo | Nota |
+|---|---|---|
+| `inicio` | fecha | al empezar el turno |
+| `fin` | fecha, opcional | vacío mientras está abierta. Una huérfana se cierra con la hora de su última actividad, no con la actual |
+| `version` | texto | id de la versión en la que se trabajó |
+| `origen` | `"medido"` \| `"estimado"` | `medido`: registrada en vivo. `estimado`: cargada a mano para un tramo pasado |
+| `nota` | texto, opcional | ej. "huérfana sin actividad", "informada por el usuario" |
+
+## Horas
+
+La página calcula las horas; no se guardan en la base.
+
+- **Unión de tramos:** los intervalos se juntan cuando se tocan o se superponen, así cada minuto cuenta una vez. Después se restan las pausas que caen adentro.
+- **Horas de una versión** = unión de sus sesiones, menos las pausas que caen adentro. Sin superposición, es la suma de las sesiones.
+  - Las sesiones `medido` suman a **medidas**; las `estimado`, a **estimadas**.
+- **Respaldo:** lo trabajado antes de la primera sesión de una versión (toda la versión, si no tiene sesiones) se toma de la unión de los intervalos `inicio`–`fin` de sus entregables no descartados, menos las pausas, y suma a **estimadas**. Nunca la suma de la duración de cada tarea: cuatro tareas del mismo commit que comparten una hora cuentan una hora.
+- **Acumulado:** la suma de las versiones desde la primera (menor `orden`) hasta la elegida en el selector, inclusive.
+- **Ritmo** (minutos por tarea): la unión de los tramos de los entregables hechos, menos las pausas, dividida por la cantidad de entregables hechos. Las tareas que comparten tramo no se cuentan dos veces.
+
 ## Escrituras
 
 - `db_write` admite hasta 50 operaciones por llamada, todas o ninguna. Para un documento que **ya existe**, cada operación lleva `ifVersion` (la versión de la última lectura o escritura). Leé antes con `db_get` o `db_query` si no la tenés.
