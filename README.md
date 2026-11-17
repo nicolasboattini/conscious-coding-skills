@@ -8,6 +8,7 @@ Skills y plugins para Claude Code. Cada uno vive en `plugins/<nombre>/` y se ins
 | [agent-monitor](plugins/agent-monitor/) | Panel en vivo (`/agentes`) con los sub-agentes y las tareas en segundo plano de todas las sesiones de Claude Code de la máquina. Necesita Node |
 | [agent-router](plugins/agent-router/) | Enruta cada sub-agente al tipo de agente y al modelo más baratos que alcancen para la tarea, e instruye a Claude a delegar lo mecánico |
 | [visor-pdf](plugins/visor-pdf/) | Panel para ver PDFs dentro de la app: `/verpdf <ruta>`, y se abre solo cuando Claude te manda un PDF. Necesita Python con PyMuPDF (`python -m pip install pymupdf`) |
+| [ux-motion-laws](plugins/ux-motion-laws/) | Decide si algo se anima y cómo: orden de prioridad entre reglas, tokens de duración, curvas y springs, los 12 principios de animación y las leyes de UX, para web (CSS, Tailwind, Motion) y React Native |
 
 ## Instalación
 
