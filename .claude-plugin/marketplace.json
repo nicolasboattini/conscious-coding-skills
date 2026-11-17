@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills y plugins para trabajar con Claude Code de forma consciente: planificar, dejar registro y ver en vivo qué se está haciendo.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "plugins": [
     {
@@ -36,6 +36,13 @@
       "description": "Panel para ver PDFs dentro de la app: /verpdf <ruta>, y se abre solo cuando Claude te manda un PDF.",
       "version": "0.1.0",
       "category": "productivity"
+    },
+    {
+      "name": "ux-motion-laws",
+      "source": "./plugins/ux-motion-laws",
+      "description": "Decide si algo se anima y cómo: orden de prioridad, tokens de duración y curvas, los 12 principios de animación y las leyes de UX para web (CSS, Tailwind, Motion) y React Native.",
+      "version": "0.1.0",
+      "category": "design"
     }
   ]
 }

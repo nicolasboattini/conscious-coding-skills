@@ -1,0 +1,10 @@
+{
+  "name": "ux-motion-laws",
+  "version": "0.1.0",
+  "description": "Decide si algo se anima y cómo: orden de prioridad entre reglas, tokens de duración, curvas y springs, los 12 principios de animación y las leyes de UX aplicados a web (CSS, Tailwind, Motion) y React Native (Reanimated).",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT",
+  "keywords": ["animation", "motion", "ux", "micro-interactions", "tailwind", "framer-motion", "reanimated", "accessibility"]
+}
