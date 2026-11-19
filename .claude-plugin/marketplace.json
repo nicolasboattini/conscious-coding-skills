@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Skills y plugins para trabajar con Claude Code de forma consciente: planificar, dejar registro y ver en vivo qué se está haciendo.",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "plugins": [
     {
@@ -43,6 +43,13 @@
       "description": "Decide si algo se anima y cómo: orden de prioridad, tokens de duración y curvas, los 12 principios de animación y las leyes de UX para web (CSS, Tailwind, Motion) y React Native.",
       "version": "0.1.0",
       "category": "design"
+    },
+    {
+      "name": "clover-snpd",
+      "source": "./plugins/clover-snpd",
+      "description": "Integración NestJS con terminales Clover por SNPD en la red local (remote-pay-cloud): conexión ws://, pairing, venta, devolución, anulación, recuperación y varias terminales.",
+      "version": "0.1.0",
+      "category": "development"
     }
   ]
 }

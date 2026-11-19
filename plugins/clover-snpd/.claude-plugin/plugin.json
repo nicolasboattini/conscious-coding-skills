@@ -1,0 +1,10 @@
+{
+  "name": "clover-snpd",
+  "version": "0.1.0",
+  "description": "Integración de un backend NestJS con terminales Clover Flex o Mini por SNPD (Secure Network Pay Display) en la red local con el SDK remote-pay-cloud: conexión ws:// sin TLS, pairing, venta, devolución, anulación, recuperación de pagos pendientes y varias terminales.",
+  "author": {
+    "name": "Nicolás Boattini"
+  },
+  "license": "MIT",
+  "keywords": ["clover", "snpd", "remote-pay-cloud", "payments", "pos", "nestjs", "kiosk", "totem"]
+}
