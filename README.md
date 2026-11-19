@@ -9,6 +9,7 @@ Skills y plugins para Claude Code. Cada uno vive en `plugins/<nombre>/` y se ins
 | [agent-router](plugins/agent-router/) | Enruta cada sub-agente al tipo de agente y al modelo más baratos que alcancen para la tarea, e instruye a Claude a delegar lo mecánico |
 | [visor-pdf](plugins/visor-pdf/) | Panel para ver PDFs dentro de la app: `/verpdf <ruta>`, y se abre solo cuando Claude te manda un PDF. Necesita Python con PyMuPDF (`python -m pip install pymupdf`) |
 | [ux-motion-laws](plugins/ux-motion-laws/) | Decide si algo se anima y cómo: orden de prioridad entre reglas, tokens de duración, curvas y springs, los 12 principios de animación y las leyes de UX, para web (CSS, Tailwind, Motion) y React Native |
+| [clover-snpd](plugins/clover-snpd/) | Integración de un backend NestJS con terminales Clover Flex o Mini por SNPD en la red local (SDK `remote-pay-cloud`): conexión `ws://`, pairing, venta, devolución, anulación, recuperación de pagos pendientes y varias terminales |
 
 ## Instalación
 
